@@ -1,0 +1,5 @@
+{
+  "display_name": "Weather (clean)",
+  "id": "local_weather",
+  "class": "LocalWeather"
+}

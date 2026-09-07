@@ -1,0 +1,13 @@
+{% extends "plugin.html" %}
+{% block content %}
+<div class="screen column clk">
+    <div class="face"><div class="time">{{ time }}{% if ampm %}<span class="ampm">{{ ampm }}</span>{% endif %}</div></div>
+    <div class="band blue foot">
+        <div class="weekday">{{ weekday }}</div>
+        <div class="right">
+            <div class="date">{{ date }}</div>
+            <div class="label meta">week {{ week }}<span class="dot"></span>day {{ day_of_year }}<span class="dot"></span>{{ days_left }} days left</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

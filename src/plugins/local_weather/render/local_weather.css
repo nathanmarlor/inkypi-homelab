@@ -1,0 +1,35 @@
+.sky { flex: 0 0 43%; align-items: center; justify-content: space-between; gap: 3vw; padding: 2.4dvh 3.5vw; }
+.now-block { flex: 0 0 auto; }
+.now-block .label { margin-bottom: 1.2dvh; }
+.now-main { display: flex; align-items: center; gap: 1.6vw; }
+.now-icon { width: 14vw; height: 14vw; flex: 0 0 auto; }
+.now-temp { font-size: 12vw; font-weight: 600; line-height: 0.9; letter-spacing: -0.04em; white-space: nowrap; }
+.now-temp .unit { font-size: 0.3em; }
+.now-cond { font-size: 2.4vw; font-weight: 600; margin-top: 1.2dvh; white-space: nowrap; }
+.now-cond .dot { margin: 0 0.7em 0.15em; }
+.facts { flex: 1 1 auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3dvh 2.4vw; max-width: 44vw; }
+.fact .label { font-size: 1.3vw; margin-bottom: 0.6dvh; }
+.fact .val { font-size: 3.1vw; font-weight: 600; white-space: nowrap; line-height: 1; }
+.fact .val .muted { font-size: 0.75em; }
+
+.wx .pane { padding: 2dvh 3vw 2dvh; }
+.wx .hdr-meta { line-height: 1.2; }
+.hour-grid { flex: 1 1 auto; display: flex; gap: 0.3vw; min-height: 0; margin-top: 1dvh; }
+.hour { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6dvh; min-width: 0; }
+.hour-label { font-size: 1.45vw; font-weight: 600; letter-spacing: 0.08em; }
+.hour-icon { width: 4vw; height: 4vw; margin: 0.5dvh 0 0.2dvh; }
+.hour-temp { font-size: 2.2vw; font-weight: 600; }
+.hour-rain-col { flex: 0 0 13dvh; width: 60%; display: flex; align-items: flex-end; border-bottom: 1px solid var(--ink); margin-top: 1dvh; }
+.hour-rain { width: 100%; background: var(--blue); }
+.hour-rain-label { font-size: 1.4vw; color: var(--blue); font-weight: 600; height: 2.4dvh; margin-top: 0.4dvh; }
+
+.days { flex: 0 0 auto; display: flex; border-top: 1px solid var(--ink); margin-top: 1.2dvh; padding-top: 1.2dvh; }
+.day { flex: 1 1 0; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 1.4vw; }
+.day + .day { border-left: 1px solid var(--ink); }
+.day-name { font-size: 1.35vw; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; writing-mode: horizontal-tb; }
+.day-icon { width: 4.6vw; height: 4.6vw; }
+.day-temps { font-size: 2.2vw; white-space: nowrap; }
+.day-temps b { display: block; line-height: 1; }
+.day-temps .muted { display: block; line-height: 1; margin-top: 0.3dvh; }
+.day-temps .muted { font-size: 0.85em; }
+.day-rain { display: none; }

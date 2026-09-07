@@ -1,0 +1,27 @@
+<div class="form-group">
+    <div class="form-group">
+        <label for="prometheusUrl" class="form-label">Prometheus URL:</label>
+        <input type="text" id="prometheusUrl" name="prometheusUrl" class="form-input" value="{{ defaults.prometheusUrl }}">
+    </div>
+    <div class="form-group">
+        <label for="nanoUrl" class="form-label">Bitaxe Nano URL:</label>
+        <input type="text" id="nanoUrl" name="nanoUrl" class="form-input" value="{{ defaults.nanoUrl }}">
+    </div>
+    <div class="form-group nowrap">
+        <label for="nanoNominalGhs" class="form-label">Nominal GH/s (used only when unreachable):</label>
+        <input type="number" id="nanoNominalGhs" name="nanoNominalGhs" class="form-input" value="{{ defaults.nanoNominalGhs }}">
+    </div>
+</div>
+<div class="form-group">
+    <span style="color: var(--text-primary);">Live figures come straight from the miner's API; the nominal hashrate only drives the odds when the miner cannot be reached.</span>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (loadPluginSettings) {
+            for (const id of ['prometheusUrl', 'nanoUrl', 'nanoNominalGhs']) {
+                if (pluginSettings[id] !== undefined && pluginSettings[id] !== '') document.getElementById(id).value = pluginSettings[id];
+            }
+        }
+    });
+</script>

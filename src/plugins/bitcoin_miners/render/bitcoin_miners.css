@@ -1,0 +1,22 @@
+.btc .panel { flex-basis: 36%; }
+.hero-hash { font-size: 11vw; font-weight: 600; line-height: 0.95; letter-spacing: -0.04em; margin-top: 3dvh; white-space: nowrap; }
+.hero-hash .unit { font-size: 0.3em; }
+.hero-label { font-size: 2.2vw; font-weight: 600; margin-top: 1.4dvh; }
+.btc .panel .sub { margin-top: 0.8dvh; font-size: 1.65vw; }
+.btc .panel .stack .stat { margin-bottom: 2.2dvh; }
+.btc .panel .stack .stat.last { margin-bottom: 0; }
+.btc .panel .stack .big { font-size: 5vw; margin-bottom: 0.4dvh; }
+.btc .panel .stack .label { font-size: 1.3vw; }
+
+.odds-hero { font-size: 10.5vw; font-weight: 600; line-height: 0.95; letter-spacing: -0.04em; margin-top: 2.6dvh; white-space: nowrap; }
+.btc .pane > .sub { margin-top: 1.2dvh; }
+.share { margin-top: 3.6dvh; }
+.row-label { display: flex; justify-content: space-between; align-items: baseline; }
+.row-label .muted { letter-spacing: 0.08em; }
+.share .bar { margin-top: 1dvh; }
+.share .small { margin-top: 0.8dvh; }
+.node-stats .stat + .stat { border-left: none; padding-left: 0; margin-left: 1vw; }
+.node-stats .mid { font-size: 3.1vw; margin-bottom: 0.6dvh; }
+.node-stats .label { font-size: 1.25vw; }
+.node-line { display: flex; justify-content: space-between; margin-top: 2dvh; padding-top: 1.4dvh; border-top: 1px solid var(--ink); }
+.node-line .muted { letter-spacing: 0.08em; }

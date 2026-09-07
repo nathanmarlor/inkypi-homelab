@@ -1,0 +1,14 @@
+<div class="form-group">
+    <div class="form-group">
+        <label for="prometheusUrl" class="form-label">Prometheus URL:</label>
+        <input type="text" id="prometheusUrl" name="prometheusUrl" class="form-input" value="{{ defaults.prometheusUrl }}">
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (loadPluginSettings && pluginSettings.prometheusUrl) {
+            document.getElementById('prometheusUrl').value = pluginSettings.prometheusUrl;
+        }
+    });
+</script>

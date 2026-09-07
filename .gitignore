@@ -172,3 +172,8 @@ mock_display_output/
 # Static Files added by install/update_vendors.sh
 /src/static/scripts/
 /src/static/styles/
+
+# Site-specific config and runtime files (InkyPi homelab fork)
+src/config/local_settings.json
+src/config/usage.json
+src/static/images/current_image.png

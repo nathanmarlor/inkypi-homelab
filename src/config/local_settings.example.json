@@ -1,0 +1,13 @@
+{
+  "_comment": "Copy to local_settings.json (gitignored). Every key is optional; plugin settings in the web UI override these defaults.",
+  "prometheus_url": "http://prometheus.local:9090",
+  "litellm_url": "http://litellm.local:4000",
+  "home_assistant_url": "http://homeassistant.local:8123",
+  "gpu_instance": "gpu-host",
+  "usage_url": "src/config/usage.json",
+  "bitaxe_url": "http://bitaxe.local",
+  "bitaxe_nominal_ghs": 1000,
+  "host_metrics_job": "host-metrics",
+  "host_names": {"192.168.1.10:9100": "NAS", "192.168.1.11:9100": "Proxmox"},
+  "energy_entities": {"import_rate": "sensor.octopus_energy_electricity_XXXX_current_rate"}
+}

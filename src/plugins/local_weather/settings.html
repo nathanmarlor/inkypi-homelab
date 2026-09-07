@@ -1,0 +1,52 @@
+<div class="form-group">
+    <div class="form-group">
+        <label for="title" class="form-label">Title:</label>
+        <input type="text" id="title" name="title" placeholder="Your town" class="form-input">
+    </div>
+    <div class="form-group nowrap">
+        <label for="latitude" class="form-label">Latitude:</label>
+        <input type="text" id="latitude" name="latitude" placeholder="51.5074" required class="form-input">
+    </div>
+    <div class="form-group nowrap">
+        <label for="longitude" class="form-label">Longitude:</label>
+        <input type="text" id="longitude" name="longitude" placeholder="-0.1278" required class="form-input">
+    </div>
+</div>
+<div class="form-group">
+    <div class="form-group nowrap">
+        <label for="units" class="form-label">Units:</label>
+        <select id="units" name="units" class="form-input">
+            <option value="metric">Metric (°C, mph)</option>
+            <option value="imperial">Imperial (°F, mph)</option>
+        </select>
+    </div>
+    <div class="form-group nowrap">
+        <label for="hourlyHours" class="form-label">Hours shown:</label>
+        <select id="hourlyHours" name="hourlyHours" class="form-input">
+            <option value="8">8</option>
+            <option value="10">10</option>
+            <option value="12">12</option>
+            <option value="14">14</option>
+            <option value="16">16</option>
+        </select>
+    </div>
+</div>
+<div class="form-group">
+    <span style="color: var(--text-primary);">Forecast data from Open-Meteo, no API key needed.</span>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let units = "metric";
+        let hours = "12";
+        if (loadPluginSettings) {
+            document.getElementById('title').value = pluginSettings.title || '';
+            document.getElementById('latitude').value = pluginSettings.latitude || '';
+            document.getElementById('longitude').value = pluginSettings.longitude || '';
+            units = pluginSettings.units || units;
+            hours = pluginSettings.hourlyHours || hours;
+        }
+        document.getElementById('units').value = units;
+        document.getElementById('hourlyHours').value = hours;
+    });
+</script>

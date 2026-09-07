@@ -1,0 +1,5 @@
+{
+  "display_name": "Homelab Status",
+  "id": "homelab_status",
+  "class": "HomelabStatus"
+}

@@ -1,0 +1,26 @@
+{% extends "plugin.html" %}
+{% block content %}
+<div class="screen column bbc">
+    <div class="band red">
+        <div class="brand">
+            <span class="brand-block">B</span><span class="brand-block">B</span><span class="brand-block">C</span>
+            <span class="brand-word">NEWS</span>
+            <span class="label section">{{ section }}</span>
+        </div>
+        <div class="hdr-meta">{{ date }}<span class="dot"></span>Updated {{ updated }}</div>
+    </div>
+    {% set lead = stories[0] %}
+    <div class="lead">
+        <div class="lead-headline">{{ lead.title }}</div>
+        <div class="lead-snippet">{{ lead.snippet }}</div>
+    </div>
+    <div class="grid cols-{{ stories | length - 1 }}">
+        {% for story in stories[1:] %}
+        <div class="card">
+            <div class="headline">{{ story.title }}</div>
+            <div class="snippet">{{ story.snippet }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

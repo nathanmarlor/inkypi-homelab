@@ -1,0 +1,45 @@
+{% extends "plugin.html" %}
+{% block content %}
+{% set m = miners[0] %}
+<div class="screen btc">
+    <div class="panel ink">
+        <div class="label">Bitcoin<span class="dot"></span>{{ m.name }}</div>
+        {% if m.online %}
+        <div class="hero-hash">{{ "%.2f" | format(m.hashrate_ths) }}<span class="unit">TH/s</span></div>
+        <div class="hero-label">mining<span class="dot"></span>up {{ m.uptime }}</div>
+        <div class="grow"></div>
+        <div class="stats stack">
+            <div class="stat"><div class="big">{{ m.temp | round | int }}<span class="unit">°C</span></div><div class="label">chip temperature</div></div>
+            <div class="stat"><div class="big">{{ m.power | round | int }}<span class="unit">W</span></div><div class="label">{{ "%.0f" | format(m.efficiency) }} J/TH</div></div>
+            <div class="stat last"><div class="big">{{ "{:,}".format(m.accepted) }}</div><div class="label">shares<span class="dot"></span>{{ m.rejected }} rejected</div></div>
+        </div>
+        {% else %}
+        <div class="hero-hash">—<span class="unit">TH/s</span></div>
+        <div class="hero-label">miner not reachable</div>
+        <div class="sub">odds use {{ "%.1f" | format(m.nominal_ths) }} TH/s nominal</div>
+        {% endif %}
+    </div>
+
+    <div class="pane">
+        <div class="hdr"><span class="hdr-title">Chance of a block</span><div class="hdr-meta">{{ date }}<br>Updated {{ updated }}</div></div>
+        <div class="odds-hero">{{ odds.odds_day }}</div>
+        <div class="sub">today<span class="dot"></span>{{ odds.p_year_text }} within a year<span class="dot"></span>one every {{ odds.wait_text }} at this rate</div>
+
+        <div class="share">
+            <div class="label row-label"><span>Best share ever<span class="dot"></span>{{ odds.best_share }}</span><span class="muted">{{ odds.best_vs_text }} of difficulty {{ odds.difficulty_text }}</span></div>
+            <div class="bar"><div class="bar-fill ink" style="width: {{ [100, 100 * odds.best_vs_network] | min }}%;"></div><div class="bar-rest"></div></div>
+            <div class="small muted">session best {{ m.best_session or "—" }}</div>
+        </div>
+
+        <div class="grow"></div>
+
+        <div class="stats node-stats">
+            <div class="stat"><div class="mid">{{ "{:,}".format(node.height) }}</div><div class="label">block height</div></div>
+            <div class="stat"><div class="mid">{{ node.blocks_24h }}</div><div class="label">blocks in 24h</div></div>
+            <div class="stat"><div class="mid">{{ fmt_si(node.mempool, 1) }}</div><div class="label">mempool tx</div></div>
+            <div class="stat"><div class="mid">{{ node.fee_sat_vb | round | int }}</div><div class="label">sat/vB</div></div>
+        </div>
+        <div class="label node-line"><span>Node<span class="dot"></span>{{ "synced" if node.sync_pct >= 99.99 else "%.2f%% synced" | format(node.sync_pct) }}</span><span class="muted">{{ node.peers }} peers<span class="dot"></span>last block {{ node.since_block_min | round | int }} min ago</span></div>
+    </div>
+</div>
+{% endblock %}

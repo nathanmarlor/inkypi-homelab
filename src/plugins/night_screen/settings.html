@@ -1,0 +1,22 @@
+<div class="form-group">
+    <div class="form-group">
+        <label for="showMoon" class="form-label">Show a small moon:</label>
+        <div class="toggle-container">
+            <input type="checkbox" id="showMoon" name="showMoon" class="toggle-checkbox" value="true" checked
+                onclick="this.value = this.checked ? 'true' : 'false'">
+            <label for="showMoon" class="toggle-label"></label>
+        </div>
+    </div>
+</div>
+<div class="form-group">
+    <span style="color: var(--text-primary);">A static dark screen. Put it in a playlist with a night-time window (e.g. 22:00 to 07:00); the panel refreshes once when the window starts and then holds still.</span>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (loadPluginSettings) {
+            const m = document.getElementById('showMoon');
+            m.checked = pluginSettings.showMoon !== 'false';
+            m.value = m.checked ? 'true' : 'false';
+        }
+    });
+</script>

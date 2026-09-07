@@ -1,0 +1,40 @@
+<div class="form-group">
+    <div class="form-group">
+        <label for="prometheusUrl" class="form-label">Prometheus URL:</label>
+        <input type="text" id="prometheusUrl" name="prometheusUrl" class="form-input" value="{{ defaults.prometheusUrl }}">
+    </div>
+    <div class="form-group">
+        <label for="gpuInstance" class="form-label">GPU host (Prometheus instance label):</label>
+        <input type="text" id="gpuInstance" name="gpuInstance" class="form-input" value="{{ defaults.gpuInstance }}">
+    </div>
+    <div class="form-group">
+        <label for="gatewayUrl" class="form-label">LiteLLM gateway URL (lifetime totals, needs LITELLM_MASTER_KEY under API Keys):</label>
+        <input type="text" id="gatewayUrl" name="gatewayUrl" class="form-input" value="{{ defaults.gatewayUrl }}">
+    </div>
+    <div class="form-group">
+        <label for="usageUrl" class="form-label">Claude/Codex usage: exporter URL or local JSON path:</label>
+        <input type="text" id="usageUrl" name="usageUrl" class="form-input" value="{{ defaults.usageUrl }}">
+    </div>
+</div>
+<div class="form-group">
+    <div class="form-group nowrap">
+        <label for="busyThreshold" class="form-label">GPU counts as busy above (%):</label>
+        <input type="number" id="busyThreshold" name="busyThreshold" class="form-input" min="0" max="100" step="1" value="{{ defaults.busyThreshold }}">
+    </div>
+    <div class="form-group nowrap">
+        <label for="electricityPence" class="form-label">Electricity price (p/kWh):</label>
+        <input type="number" id="electricityPence" name="electricityPence" class="form-input" min="0" step="0.1" value="{{ defaults.electricityPence }}">
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (loadPluginSettings) {
+            for (const id of ['prometheusUrl', 'gpuInstance', 'gatewayUrl', 'usageUrl', 'busyThreshold', 'electricityPence']) {
+                if (pluginSettings[id] !== undefined && pluginSettings[id] !== '') {
+                    document.getElementById(id).value = pluginSettings[id];
+                }
+            }
+        }
+    });
+</script>

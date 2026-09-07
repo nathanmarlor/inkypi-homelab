@@ -1,0 +1,31 @@
+{% extends "plugin.html" %}
+{% block content %}
+<div class="screen column he">
+    <div class="pane top">
+        <div class="hdr"><span><span class="hdr-title">Home Energy</span><span class="hdr-sub"><span class="key yellow-key">solar</span><span class="key ink-key">house</span><span class="key blue-key">battery</span></span></span><div class="hdr-meta">{{ date }}<span class="dot"></span>Updated {{ updated }}</div></div>
+        <svg class="chart" viewBox="0 0 1000 100" preserveAspectRatio="none">
+            <line x1="0" y1="50" x2="1000" y2="50" stroke="#000" stroke-width="1" stroke-dasharray="2 6" vector-effect="non-scaling-stroke"/>
+            {% if chart.pv_area %}<polygon points="{{ chart.pv_area }}" fill="#e7de23"/>{% endif %}
+            {% if chart.pv_line %}<polyline points="{{ chart.pv_line }}" fill="none" stroke="#000" stroke-width="1.5" vector-effect="non-scaling-stroke"/>{% endif %}
+            {% if chart.load_line %}<polyline points="{{ chart.load_line }}" fill="none" stroke="#000" stroke-width="2.5" vector-effect="non-scaling-stroke"/>{% endif %}
+            {% if chart.soc_line %}<polyline points="{{ chart.soc_line }}" fill="none" stroke="#1e1dae" stroke-width="3" vector-effect="non-scaling-stroke"/>{% endif %}
+            <line x1="{{ chart.now_x }}" y1="0" x2="{{ chart.now_x }}" y2="100" stroke="#cd2425" stroke-width="2" vector-effect="non-scaling-stroke"/>
+            <line x1="0" y1="100" x2="1000" y2="100" stroke="#000" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <div class="chart-axis small"><span>00</span><span>06</span><span>12</span><span>18</span><span class="end">24</span></div>
+        <div class="stats totals">
+            <div class="stat"><div class="label">Solar today</div><div class="mid">{{ "%.1f" | format(solar_today) }}<span class="unit">of {{ "%.0f" | format(forecast_today) }} kWh</span></div><div class="sub">{{ "%.1f" | format(forecast_remaining) }} to come<span class="dot"></span>tomorrow {{ "%.1f" | format(forecast_tomorrow) }}</div></div>
+            <div class="stat"><div class="label">Grid today</div><div class="mid">{{ "%.1f" | format(import_today) }}<span class="unit">in</span> / {{ "%.1f" | format(export_today) }}<span class="unit">out</span></div><div class="sub">{{ "%.1f" | format(import_rate_p) }}p import<span class="dot"></span>{{ "%.1f" | format(export_rate_p) }}p export</div></div>
+            <div class="stat"><div class="label">Battery today</div><div class="mid">+{{ "%.1f" | format(battery_in_today) }} / −{{ "%.1f" | format(battery_out_today) }}<span class="unit">kWh</span></div><div class="sub">{{ "%.0f" | format(battery_temp) }}° cells</div></div>
+            <div class="stat"><div class="label">EV<span class="dot"></span>hot water</div><div class="mid">{{ zappi_status }} / {{ eddi_tank | round | int }}°</div><div class="sub">{{ zappi_plug }}<span class="dot"></span>{{ "%.1f" | format(zappi_session) }} kWh last</div></div>
+        </div>
+    </div>
+
+    <div class="band yellow now">
+        <div class="stat"><div class="huge">{{ "%.1f" | format(pv_now) }}<span class="unit">kW</span></div><div class="label">Solar</div><div class="small">right now</div></div>
+        <div class="stat"><div class="huge">{{ soc }}<span class="unit">%</span></div><div class="label">Battery</div><div class="small">{{ battery_state }}{% if battery_kw %} at {{ "%.1f" | format(battery_kw) }} kW{% endif %}</div></div>
+        <div class="stat"><div class="huge{% if grid_state == 'importing' %} red{% endif %}">{{ "%.1f" | format(grid_kw) }}<span class="unit">kW</span></div><div class="label">Grid</div><div class="small">{{ grid_state }}</div></div>
+        <div class="stat"><div class="huge">{{ "%.1f" | format(load_now) }}<span class="unit">kW</span></div><div class="label">House</div><div class="small">{% if self_sufficiency is not none %}{{ self_sufficiency | round | int }}% self-powered today{% else %}rack {{ rack_power | round | int }} W{% endif %}</div></div>
+    </div>
+</div>
+{% endblock %}

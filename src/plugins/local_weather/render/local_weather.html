@@ -1,0 +1,119 @@
+{% extends "plugin.html" %}
+
+{% block content %}
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- All icons live in a 64x64 box. Solid fills only, in panel inks. -->
+    <symbol id="sun" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="13" fill="#e7de23" stroke="#000" stroke-width="2.5"/>
+      <g stroke="#000" stroke-width="3" stroke-linecap="round">
+        <line x1="32" y1="6" x2="32" y2="13"/><line x1="32" y1="51" x2="32" y2="58"/>
+        <line x1="6" y1="32" x2="13" y2="32"/><line x1="51" y1="32" x2="58" y2="32"/>
+        <line x1="13.6" y1="13.6" x2="18.6" y2="18.6"/><line x1="45.4" y1="45.4" x2="50.4" y2="50.4"/>
+        <line x1="13.6" y1="50.4" x2="18.6" y2="45.4"/><line x1="45.4" y1="18.6" x2="50.4" y2="13.6"/>
+      </g>
+    </symbol>
+    <symbol id="moon" viewBox="0 0 64 64">
+      <path d="M40 8a22 22 0 1 0 16 36A18 18 0 0 1 40 8z" fill="#e7de23" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="cloud-shape" viewBox="0 0 64 64">
+      <path d="M18 50h30a11 11 0 0 0 1-22 15 15 0 0 0-28-4 12 12 0 0 0-3 26z" fill="#fff" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="cloud" viewBox="0 0 64 64"><use href="#cloud-shape"/></symbol>
+    <symbol id="sun-cloud" viewBox="0 0 64 64">
+      <g transform="translate(26 0) scale(0.6)"><use href="#sun"/></g>
+      <g transform="translate(0 8)"><use href="#cloud-shape"/></g>
+    </symbol>
+    <symbol id="moon-cloud" viewBox="0 0 64 64">
+      <g transform="translate(28 0) scale(0.55)"><use href="#moon"/></g>
+      <g transform="translate(0 8)"><use href="#cloud-shape"/></g>
+    </symbol>
+    <symbol id="fog" viewBox="0 0 64 64">
+      <g transform="translate(0 -8)"><use href="#cloud-shape"/></g>
+      <g stroke="#000" stroke-width="3" stroke-linecap="round"><line x1="14" y1="50" x2="50" y2="50"/><line x1="20" y1="58" x2="44" y2="58"/></g>
+    </symbol>
+    <symbol id="drizzle" viewBox="0 0 64 64">
+      <g transform="translate(0 -8)"><use href="#cloud-shape"/></g>
+      <g fill="#1e1dae"><circle cx="22" cy="52" r="2.5"/><circle cx="32" cy="56" r="2.5"/><circle cx="42" cy="52" r="2.5"/></g>
+    </symbol>
+    <symbol id="rain" viewBox="0 0 64 64">
+      <g transform="translate(0 -8)"><use href="#cloud-shape"/></g>
+      <g stroke="#1e1dae" stroke-width="3.5" stroke-linecap="round"><line x1="22" y1="48" x2="18" y2="58"/><line x1="33" y1="48" x2="29" y2="58"/><line x1="44" y1="48" x2="40" y2="58"/></g>
+    </symbol>
+    <symbol id="rain-heavy" viewBox="0 0 64 64">
+      <g transform="translate(0 -8)"><use href="#cloud-shape"/></g>
+      <g stroke="#1e1dae" stroke-width="3.5" stroke-linecap="round"><line x1="18" y1="47" x2="13" y2="60"/><line x1="28" y1="47" x2="23" y2="60"/><line x1="38" y1="47" x2="33" y2="60"/><line x1="48" y1="47" x2="43" y2="60"/></g>
+    </symbol>
+    <symbol id="showers" viewBox="0 0 64 64">
+      <g transform="translate(30 -2) scale(0.5)"><use href="#sun"/></g>
+      <g transform="translate(0 -4)"><use href="#cloud-shape"/></g>
+      <g stroke="#1e1dae" stroke-width="3.5" stroke-linecap="round"><line x1="24" y1="50" x2="20" y2="60"/><line x1="38" y1="50" x2="34" y2="60"/></g>
+    </symbol>
+    <symbol id="sleet" viewBox="0 0 64 64">
+      <g transform="translate(0 -8)"><use href="#cloud-shape"/></g>
+      <line x1="22" y1="48" x2="18" y2="58" stroke="#1e1dae" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="33" cy="54" r="3" fill="none" stroke="#000" stroke-width="2.5"/>
+      <line x1="46" y1="48" x2="42" y2="58" stroke="#1e1dae" stroke-width="3.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="snow" viewBox="0 0 64 64">
+      <g transform="translate(0 -8)"><use href="#cloud-shape"/></g>
+      <g stroke="#000" stroke-width="2.5" stroke-linecap="round">
+        <g transform="translate(22 54)"><line x1="-5" y1="0" x2="5" y2="0"/><line x1="0" y1="-5" x2="0" y2="5"/><line x1="-3.5" y1="-3.5" x2="3.5" y2="3.5"/><line x1="-3.5" y1="3.5" x2="3.5" y2="-3.5"/></g>
+        <g transform="translate(42 54)"><line x1="-5" y1="0" x2="5" y2="0"/><line x1="0" y1="-5" x2="0" y2="5"/><line x1="-3.5" y1="-3.5" x2="3.5" y2="3.5"/><line x1="-3.5" y1="3.5" x2="3.5" y2="-3.5"/></g>
+      </g>
+    </symbol>
+    <symbol id="thunder" viewBox="0 0 64 64">
+      <g transform="translate(0 -8)"><use href="#cloud-shape"/></g>
+      <polygon points="34,42 24,58 32,58 29,68 42,50 34,50 38,42" fill="#e7de23" stroke="#000" stroke-width="2" stroke-linejoin="round" transform="translate(0 -6)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="screen column wx">
+    <div class="band {{ panel }} sky">
+        <div class="now-block">
+            <div class="label">{{ title }}</div>
+            <div class="now-main">
+                <svg class="now-icon"><use href="#{{ current.icon }}"/></svg>
+                <div>
+                    <div class="now-temp">{{ current.temp }}<span class="unit">{{ unit }}</span></div>
+                    <div class="now-cond">{{ current.text }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="facts">
+            <div class="fact"><div class="label">High / low</div><div class="val">{{ today.high }}° / {{ today.low }}°</div></div>
+            <div class="fact"><div class="label">Feels like</div><div class="val">{{ current.feels }}°</div></div>
+            <div class="fact"><div class="label">Wind</div><div class="val">{{ current.wind }} <span class="muted">{{ wind_unit }} {{ current.wind_dir }}</span></div></div>
+            <div class="fact"><div class="label">Rain next {{ hours | length }}h</div><div class="val">{{ rain_ahead }}%</div></div>
+            <div class="fact"><div class="label">Sunrise</div><div class="val">{{ sunrise }}</div></div>
+            <div class="fact"><div class="label">Sunset</div><div class="val">{{ sunset }}</div></div>
+        </div>
+    </div>
+
+    <div class="pane">
+        <div class="hdr"><span class="label">Next {{ hours | length }} hours</span><div class="hdr-meta">{{ date }}<span class="dot"></span>Updated {{ updated }}</div></div>
+        <div class="hour-grid">
+            {% for h in hours %}
+            <div class="hour">
+                <div class="hour-label">{{ "Now" if loop.first else h.label }}</div>
+                <svg class="hour-icon"><use href="#{{ h.icon }}"/></svg>
+                <div class="hour-temp">{{ h.temp }}°</div>
+                <div class="hour-rain-col"><div class="hour-rain" style="height: {{ h.rain }}%;"></div></div>
+                <div class="hour-rain-label">{% if h.rain >= 10 %}{{ h.rain }}%{% else %}&nbsp;{% endif %}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="days">
+            {% for d in days %}
+            <div class="day">
+                <div class="day-name">{{ d.name }}</div>
+                <svg class="day-icon"><use href="#{{ d.icon }}"/></svg>
+                <div class="day-temps"><b>{{ d.high }}°</b><span class="muted">{{ d.low }}°</span></div>
+                <div class="day-rain">{% if d.rain >= 10 %}{{ d.rain }}% rain{% else %}{{ d.text }}{% endif %}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

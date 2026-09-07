@@ -1,0 +1,17 @@
+# systemd --user unit for the Claude Code usage exporter. Runs on the machine where Claude Code is used,
+# serves usage.json on :8765 and pushes it to the InkyPi so the panel stays standalone.
+#   cp install/examples/claude-usage-exporter.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now claude-usage-exporter
+#   loginctl enable-linger $USER   # keep it running when logged out
+[Unit]
+Description=Claude Code usage exporter for InkyPi
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 %h/git/inkypi/scripts/claude_usage_exporter.py --port 8765 --days 7 --push pi@inkypi:/home/pi/InkyPi/src/config/usage.json
+Environment=TZ=Europe/London
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

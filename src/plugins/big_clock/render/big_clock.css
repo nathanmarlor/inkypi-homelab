@@ -1,0 +1,9 @@
+.clk { background: var(--paper); color: var(--ink); }
+.face { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; min-height: 0; }
+.time { font-size: 34vw; font-weight: 600; letter-spacing: -0.04em; line-height: 0.85; }
+.time .ampm { font-size: 0.2em; font-weight: 400; letter-spacing: 0; margin-left: 0.15em; }
+.foot { align-items: center; justify-content: space-between; padding: 3.2dvh 4vw; }
+.weekday { font-size: 6.4vw; font-weight: 600; line-height: 1; }
+.right { text-align: right; }
+.date { font-size: 3vw; font-weight: 600; line-height: 1; }
+.meta { margin-top: 1.4dvh; font-weight: 400; }

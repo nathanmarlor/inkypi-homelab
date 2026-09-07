@@ -1,0 +1,23 @@
+.he .pane.top { flex: 1 1 auto; min-height: 0; padding: 2.4dvh 3vw 2dvh; }
+.key { display: inline-block; padding-left: 2vw; position: relative; margin-left: 1.4vw; font-weight: 400; font-size: 1.5vw; text-transform: uppercase; letter-spacing: 0.14em; }
+.key::before { content: ""; position: absolute; left: 0; top: 0.05em; width: 1.4vw; height: 1em; border: 1px solid var(--ink); }
+.yellow-key::before { background: var(--yellow); }
+.ink-key::before { background: var(--ink); }
+.blue-key::before { background: var(--blue); border-color: var(--blue); }
+.chart { flex: 1 1 auto; width: 100%; min-height: 0; display: block; margin-top: 1.2dvh; }
+.chart-axis { display: flex; margin-top: 0.4dvh; letter-spacing: 0.1em; }
+.chart-axis span { flex: 1 1 0; }
+.chart-axis .end { flex: 0 0 auto; }
+.totals { margin-top: 1.6dvh; padding-top: 1.6dvh; border-top: 1px solid var(--ink); }
+.totals .stat + .stat { padding-left: 1.6vw; margin-left: 1.6vw; }
+.totals .label { margin-bottom: 0.5dvh; font-size: 1.3vw; }
+.totals .mid { font-size: 2.7vw; margin-bottom: 0.4dvh; }
+.totals .mid .unit { font-size: 0.5em; }
+.totals .sub { font-size: 1.45vw; }
+
+.now { flex: 0 0 34%; align-items: center; padding: 2dvh 3vw; }
+.now .stat + .stat { border-left: 1px solid var(--ink); padding-left: 2.2vw; margin-left: 2.2vw; }
+.huge { font-size: 8.4vw; font-weight: 600; line-height: 0.95; letter-spacing: -0.04em; white-space: nowrap; margin-bottom: 1dvh; }
+.huge .unit { font-size: 0.32em; }
+.now .label { font-size: 1.3vw; }
+.now .small { font-size: 1.5vw; margin-top: 0.4dvh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

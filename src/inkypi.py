@@ -112,6 +112,6 @@ if __name__ == '__main__':
             except:
                 pass  # Ignore if we can't get the IP
 
-        serve(app, host="0.0.0.0", port=PORT, threads=1)
+        serve(app, host="0.0.0.0", port=PORT, threads=4)  # local patch: 1 thread makes the UI hang for the whole ~45 s panel refresh
     finally:
         refresh_task.stop()

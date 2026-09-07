@@ -1,0 +1,83 @@
+{% extends "plugin.html" %}
+{% block content %}
+<div class="screen ai">
+    <div class="panel blue">
+        <div class="label">AI Usage<span class="dot"></span>M5</div>
+        {% if m5.online %}
+        {% set money = fmt_money(m5.spend_today) %}<div class="hero-money len-{{ [money | length, 9] | min }}">{{ money }}</div>
+        <div class="hero-label">cloud spend avoided today</div>
+        <div class="sub">priced at Claude Sonnet API rates</div>
+        {% if gateway.available %}
+        <div class="gateway-total">
+            <div class="label">Gateway since {{ gateway.since }}</div>
+            <div class="gt-row"><div><div class="gt-val">{{ fmt_money(gateway.spend) }}</div><div class="gt-unit">spend</div></div><div><div class="gt-val">{{ fmt_tokens(gateway.tokens) }}</div><div class="gt-unit">tokens</div></div><div><div class="gt-val">{{ fmt_tokens(gateway.requests) }}</div><div class="gt-unit">requests</div></div></div>
+        </div>
+        {% else %}
+        <div class="sub">{{ fmt_money(m5.spend_total) }} since {{ m5.spend_since }}</div>
+        {% endif %}
+        <div class="grow"></div>
+        <div class="stats stack">
+            <div class="stat"><div class="big">{{ m5.occupied_pct | round | int }}<span class="unit">%</span></div><div class="label">GPU busy today<span class="dot"></span>{{ "%.1f" | format(m5.occupied_hours) }} h</div></div>
+            <div class="stat"><div class="big">{{ m5.gpu_now | round | int }}<span class="unit">%</span></div><div class="label">GPU now<span class="dot"></span>{{ m5.power_now | round | int }} W</div></div>
+            <div class="stat last"><div class="big">{{ m5.mem_pct | round | int }}<span class="unit">%</span></div><div class="label">GPU memory<span class="dot"></span>{{ m5.loaded_models }} model{{ '' if m5.loaded_models == 1 else 's' }} loaded</div></div>
+        </div>
+        {% else %}
+        <div class="hero-label">Prometheus unreachable</div>
+        {% endif %}
+    </div>
+
+    <div class="pane">
+        {% set c = usage.claude if usage.online else none %}
+        <div class="hdr"><span class="hdr-title">Claude Code</span>{% if c and c.limits.available %}<span class="hdr-sub">{{ c.limits.plan }}{% if usage.stale %}<span class="dot"></span><span class="red">{{ usage.age_text }}</span>{% endif %}</span>{% endif %}<div class="hdr-meta">{{ date }}<br>Updated {{ updated }}</div></div>
+
+        {% if c and c.limits.available %}
+        <div class="limits">
+            {% for lim in c.limits.limits %}
+            <div class="limit">
+                <div class="limit-num {{ lim.severity }}">{{ lim.percent }}<span class="unit">%</span></div>
+                <div class="limit-body">
+                    <div class="limit-head"><span class="label">{{ lim.label }}</span><span class="small">{{ lim.reset_text }}</span></div>
+                    <div class="bar"><div class="bar-fill {% if lim.severity in ('warning', 'critical') %}red{% else %}ink{% endif %}" style="width: {{ lim.percent }}%;"></div><div class="bar-rest"></div></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% elif c %}
+        <div class="offline">Plan limits unavailable ({{ c.limits.reason }})</div>
+        {% else %}
+        <div class="offline">Usage exporter unreachable</div>
+        {% endif %}
+
+        {% if c %}
+        <div class="stats agent-stats">
+            <div class="stat"><div class="mid">{{ fmt_money(c.today.cost_usd) }}</div><div class="label">today at API rates</div></div>
+            <div class="stat"><div class="mid">{{ fmt_money(c.week_cost) }}</div><div class="label">last 7 days</div></div>
+        </div>
+        {% endif %}
+
+        <div class="grow"></div>
+
+        {% if m5.online %}
+        <div class="chart-row">
+            <div class="chart">
+                <div class="label">GPU busy by hour</div>
+                <div class="hour-bars">
+                    {% for h in m5.hourly %}<div class="hour{% if h.future %} future{% endif %}"><div class="hour-fill" style="height: {{ h.pct | round | int }}%;"></div></div>{% endfor %}
+                </div>
+                <div class="hour-axis small"><span>00</span><span>06</span><span>12</span><span>18</span><span class="end">24</span></div>
+            </div>
+            <div class="gateway">
+                <div class="label row-label"><span>Gateway today</span><span class="muted">{{ m5.requests_today | int }} req</span></div>
+                {% for name, value in m5.by_client %}
+                <div class="list-row"><span class="list-name">{{ name }}</span><span class="list-bar bar thin"><span class="bar-fill red" style="width: {{ (100 * value / m5.client_max) | round | int }}%;"></span><span class="bar-rest"></span></span><span class="list-val">{{ fmt_money(value) }}</span></div>
+                {% else %}
+                <div class="sub muted">no traffic yet</div>
+                {% endfor %}
+                <div class="list-row elec"><span class="list-name">electricity</span><span class="list-bar small muted">{{ "%.2f" | format(m5.kwh_today) }} kWh</span><span class="list-val">£{{ "%.2f" | format(m5.electricity_gbp) }}</span></div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

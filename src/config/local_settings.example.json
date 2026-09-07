@@ -8,6 +8,12 @@
   "bitaxe_url": "http://bitaxe.local",
   "bitaxe_nominal_ghs": 1000,
   "host_metrics_job": "host-metrics",
-  "host_names": {"192.168.1.10:9100": "NAS", "192.168.1.11:9100": "Proxmox"},
-  "energy_entities": {"import_rate": "sensor.octopus_energy_electricity_XXXX_current_rate"}
+  "host_names": {
+    "192.168.1.10:9100": "NAS",
+    "192.168.1.11:9100": "Proxmox"
+  },
+  "energy_entities": {
+    "import_rate": "sensor.octopus_energy_electricity_XXXX_current_rate"
+  },
+  "claude_credentials": "/home/pi/.claude/.credentials.json"
 }

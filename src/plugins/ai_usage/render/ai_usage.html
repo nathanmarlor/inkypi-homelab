@@ -28,7 +28,7 @@
 
     <div class="pane">
         {% set c = usage.claude if usage.online else none %}
-        <div class="hdr"><span class="hdr-title">Claude Code</span>{% if c and c.limits.available %}<span class="hdr-sub">{{ c.limits.plan }}{% if usage.stale %}<span class="dot"></span><span class="red">{{ usage.age_text }}</span>{% endif %}</span>{% endif %}<div class="hdr-meta">{{ date }}<br>Updated {{ updated }}</div></div>
+        <div class="hdr"><span class="hdr-title">Claude Code</span>{% if c and c.limits.available %}<span class="hdr-sub">{{ c.limits.plan }}{% if usage.stale and c.has_stats %}<span class="dot"></span><span class="red">{{ usage.age_text }}</span>{% endif %}</span>{% endif %}<div class="hdr-meta">{{ date }}<br>Updated {{ updated }}</div></div>
 
         {% if c and c.limits.available %}
         <div class="limits">
@@ -48,7 +48,7 @@
         <div class="offline">Usage exporter unreachable</div>
         {% endif %}
 
-        {% if c %}
+        {% if c and c.has_stats %}
         <div class="stats agent-stats">
             <div class="stat"><div class="mid">{{ fmt_money(c.today.cost_usd) }}</div><div class="label">today at API rates</div></div>
             <div class="stat"><div class="mid">{{ fmt_money(c.week_cost) }}</div><div class="label">last 7 days</div></div>

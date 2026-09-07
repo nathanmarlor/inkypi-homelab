@@ -16,9 +16,9 @@
 .ai .panel .stack .big { font-size: 5.2vw; margin-bottom: 0.4dvh; }
 .ai .panel .stack .label { font-size: 1.3vw; }
 
-.limits { display: flex; flex-direction: column; gap: 2.4dvh; margin-top: 2.6dvh; }
+.limits { display: flex; flex-direction: column; gap: 3.4dvh; margin-top: 3.4dvh; }
 .limit { display: flex; align-items: center; gap: 2vw; }
-.limit-num { flex: 0 0 11vw; font-size: 5.4vw; font-weight: 600; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; }
+.limit-num { flex: 0 0 11vw; font-size: 6vw; font-weight: 600; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; }
 .limit-num.warning, .limit-num.critical { color: var(--red); }
 .limit-body { flex: 1 1 auto; min-width: 0; }
 .limit-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.7dvh; }
@@ -34,7 +34,7 @@
 .gateway { flex: 1 1 0; min-width: 0; }
 .row-label { display: flex; justify-content: space-between; align-items: baseline; }
 .row-label .muted { letter-spacing: 0.08em; }
-.hour-bars { display: flex; gap: 2px; height: 22dvh; align-items: flex-end; margin-top: 1dvh; border-bottom: 1px solid var(--ink); }
+.hour-bars { display: flex; gap: 2px; height: 26dvh; align-items: flex-end; margin-top: 1dvh; border-bottom: 1px solid var(--ink); }
 .hour { flex: 1 1 0; height: 100%; display: flex; align-items: flex-end; }
 .hour.future { background-image: radial-gradient(var(--ink) 1px, transparent 1px); background-size: 5px 5px; background-position: bottom; background-repeat: repeat-x; }
 .hour-fill { width: 100%; background: var(--blue); min-height: 1px; }

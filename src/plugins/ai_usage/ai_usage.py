@@ -215,9 +215,92 @@ class AiUsage(ThemedPlugin):
             logger.warning(f"Gateway totals unavailable: {e}")
             return {"available": False}
 
-    # ---------- Claude Code / Codex exporter ----------
+    # ---------- Claude plan limits, read directly with the device's own long-lived token ----------
 
-    def collect_usage(self, settings, tz):
+    CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
+    CLAUDE_TOKEN_URLS = ["https://platform.claude.com/v1/oauth/token", "https://console.anthropic.com/v1/oauth/token"]
+    CLAUDE_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"  # Claude Code's public OAuth client
+
+    def claude_access_token(self):
+        """Read the credentials written by `claude auth login` on this device, refreshing them when near expiry.
+
+        Access tokens last about eight hours; Claude Code only refreshes them while it is running, so the
+        plugin does the refresh itself and writes the rotated tokens back in the same file format.
+        """
+        import json, os, time
+        path = os.path.expanduser(local_setting("claude_credentials", "~/.claude/.credentials.json"))
+        try:
+            with open(path) as fh:
+                full = json.load(fh)
+            creds = full["claudeAiOauth"]
+        except (OSError, KeyError, ValueError):
+            return None, f"no Claude login at {path}"
+        if creds.get("expiresAt", 0) / 1000 - time.time() > 600:
+            return creds["accessToken"], None
+        body = {"grant_type": "refresh_token", "refresh_token": creds.get("refreshToken"), "client_id": self.CLAUDE_CLIENT_ID}
+        for url in self.CLAUDE_TOKEN_URLS:
+            try:
+                resp = requests.post(url, json=body, timeout=15, headers={"User-Agent": "inkypi-ai-usage"})
+                if resp.status_code == 404:
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+            except Exception as e:
+                logger.warning(f"Claude token refresh via {url} failed: {e}")
+                continue
+            creds["accessToken"] = data["access_token"]
+            creds["refreshToken"] = data.get("refresh_token", creds.get("refreshToken"))
+            creds["expiresAt"] = int(time.time() * 1000) + int(data.get("expires_in", 28800)) * 1000
+            if data.get("scope"):
+                creds["scopes"] = data["scope"].split()
+            full["claudeAiOauth"] = creds
+            owner = os.stat(path)
+            tmp = path + ".tmp"
+            with open(tmp, "w") as fh:
+                json.dump(full, fh)
+            os.chmod(tmp, 0o600)
+            try:
+                os.chown(tmp, owner.st_uid, owner.st_gid)  # the service runs as root; keep the file readable by the user who logged in
+            except PermissionError:
+                pass
+            os.replace(tmp, path)
+            logger.info("Claude credentials refreshed")
+            return creds["accessToken"], None
+        return None, "Claude token expired and refresh failed; run `claude auth login` on the device"
+
+    def collect_limits_direct(self, device_config):
+        """Same figures as Claude Code's /usage screen, using this device's own Claude login."""
+        token, problem = self.claude_access_token()
+        if not token:
+            return {"available": False, "reason": problem} if problem and "no Claude login" not in problem else None
+        try:
+            resp = requests.get(self.CLAUDE_USAGE_URL, timeout=15, headers={
+                "Authorization": f"Bearer {token}", "anthropic-beta": "oauth-2025-04-20", "User-Agent": "inkypi-ai-usage",
+            })
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as e:
+            logger.error(f"Claude usage endpoint failed: {e}")
+            return {"available": False, "reason": f"limits request failed ({e.__class__.__name__})"}
+        limits = []
+        for lim in data.get("limits") or []:
+            model = ((lim.get("scope") or {}).get("model") or {}).get("display_name")
+            kind = lim.get("kind")
+            label = "Session" if kind == "session" else "Weekly · all models" if kind == "weekly_all" else f"Weekly · {model}" if model else (kind or "Limit")
+            limits.append({"kind": kind, "label": label, "percent": lim.get("percent"), "severity": lim.get("severity"), "resets_at": lim.get("resets_at")})
+        tier = ""
+        try:
+            import json, os
+            tier_creds = json.load(open(os.path.expanduser(local_setting("claude_credentials", "~/.claude/.credentials.json"))))["claudeAiOauth"]
+            tier = (tier_creds.get("subscriptionType") or "").title() + (" 20x" if "20x" in (tier_creds.get("rateLimitTier") or "") else " 5x" if "5x" in (tier_creds.get("rateLimitTier") or "") else "")
+        except Exception:
+            pass
+        return {"available": True, "plan": tier.strip(), "limits": limits}
+
+    # ---------- Claude Code / Codex exporter (optional: token and cost figures) ----------
+
+    def collect_usage(self, settings, tz, device_config):
+        direct = self.collect_limits_direct(device_config)
         url = settings.get("usageUrl") or DEFAULT_USAGE_URL
         try:
             if url.startswith("http://") or url.startswith("https://"):
@@ -229,8 +312,10 @@ class AiUsage(ThemedPlugin):
                 with open(url) as fh:
                     data = json.load(fh)
         except Exception as e:
-            logger.error(f"Usage data unavailable at {url}: {e}")
-            return {"online": False}
+            logger.info(f"No exporter snapshot at {url} ({e.__class__.__name__}); showing plan limits only")
+            data = {}
+            if direct is None:
+                return {"online": False}
 
         # How old is this snapshot? Pushed data goes stale if the source machine is off.
         age_text = ""
@@ -264,7 +349,7 @@ class AiUsage(ThemedPlugin):
         def shape(section):
             today = section.get("today", {})
             daily = section.get("daily", [])
-            limits = dict(section.get("limits") or {"available": False, "reason": "no limits"})
+            limits = dict(direct or section.get("limits") or {"available": False, "reason": "no limits"})
             if limits.get("available"):
                 limits["limits"] = [
                     {**lim, "percent": int(round(lim.get("percent") or 0)), "reset_text": reset_text(lim.get("resets_at"))}
@@ -283,7 +368,9 @@ class AiUsage(ThemedPlugin):
                 "week_cost": sum(d.get("cost_usd", 0) for d in daily),
             }
 
-        return {"online": True, "stale": stale, "age_text": age_text, "host": data.get("host", ""), "claude": shape(data.get("claude", {})), "codex": shape(data.get("codex", {}))}
+        claude = shape(data.get("claude", {}))
+        claude["has_stats"] = bool(data.get("claude", {}).get("available")) and not stale
+        return {"online": True, "stale": stale, "age_text": age_text, "host": data.get("host", ""), "claude": claude, "codex": shape(data.get("codex", {}))}
 
     # ---------- render ----------
 
@@ -297,7 +384,7 @@ class AiUsage(ThemedPlugin):
         time_format = "%I:%M %p" if device_config.get_config("time_format", default="24h") == "12h" else "%H:%M"
 
         m5 = self.collect_m5(settings, now)
-        usage = self.collect_usage(settings, tz)
+        usage = self.collect_usage(settings, tz, device_config)
         gateway = self.collect_gateway(settings, device_config)
 
         if not m5.get("online") and not usage.get("online"):

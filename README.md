@@ -1,41 +1,58 @@
 # InkyPi homelab screens
 
-A set of screens for a 7.3" Pimoroni Inky Impression (2025 Spectra 6 edition) on a Raspberry Pi,
-built on top of [InkyPi](https://github.com/fatihak/InkyPi) by [@fatihak](https://github.com/fatihak).
+Screens for a 7.3" Pimoroni Inky Impression (2025 Spectra 6 edition) on a Raspberry Pi 4B, built on
+[InkyPi](https://github.com/fatihak/InkyPi) by [@fatihak](https://github.com/fatihak).
 
-**This repository is a fork of InkyPi.** Everything under `src/` that is not listed below is InkyPi's
-own code, unchanged, and the installer, web UI, playlist scheduler and display drivers are all InkyPi's
-work. It is published under the same GPL-3.0 licence (see `LICENSE`); the original README is kept at
+**This repository is a fork of InkyPi.** The installer, web UI, playlist scheduler and display drivers are
+InkyPi's work and are unchanged apart from the two small edits listed under *Changes to upstream*. It is
+published under the same GPL-3.0 licence (see `LICENSE`); the original README is kept at
 [`docs/UPSTREAM_README.md`](docs/UPSTREAM_README.md). Bug reports about the framework belong upstream;
-anything about the screens below belongs here.
+anything about the screens below belongs here. InkyPi's full history is in this repo, so to pull upstream
+changes: `git remote add upstream https://github.com/fatihak/InkyPi.git && git fetch upstream && git merge upstream/main`.
 
-It is a GitHub fork, so InkyPi's full history is here and the additions are a single commit on top. To pull
-upstream changes: `git remote add upstream https://github.com/fatihak/InkyPi.git && git fetch upstream && git merge upstream/main`.
+| | |
+|---|---|
+| ![Clock](docs/screenshots/clock.png) | ![Weather](docs/screenshots/weather.png) |
+| ![BBC News](docs/screenshots/bbc_news.png) | ![Bitcoin](docs/screenshots/bitcoin.png) |
 
-## What's added
+The screenshots are what the panel shows: renders passed through the same six-colour quantiser the Inky
+driver uses (`scripts/spectra6_preview.py`).
 
-| Plugin | Screen | Data |
+## Screens
+
+| Plugin | What it shows | Data source |
 |---|---|---|
-| `big_clock` | Large clock with date, week and day-of-year band | local time |
-| `local_weather` | Sky-coloured band with current conditions, 12-hour strip with rain chance, 5-day row | [Open-Meteo](https://open-meteo.com/) (no key) |
-| `bbc_news` | Lead story plus three cards, with the opening paragraphs of each article | BBC RSS + article pages |
-| `ai_usage` | Cloud spend avoided by a local LLM box, GPU busy/now/memory, lifetime gateway totals; Claude Code plan limits (session, weekly, per-model) read with the Pi's own Claude login | Prometheus, [LiteLLM](https://github.com/BerriAI/litellm) proxy API, Claude OAuth usage endpoint |
-| `home_energy` | Solar, battery, grid and house power with a day chart and today's totals | Home Assistant REST API (FoxESS, Solcast, myenergi, Octopus entities) |
-| `bitcoin_miners` | Bitaxe hashrate and health, odds of finding a block, best share, node stats | Bitaxe/ForgeOS JSON API, `bitcoind` exporter in Prometheus |
-| `homelab_status` | Host cards with CPU/load/memory/disk gauges, k3s summary, platform tiles, alerts line | Prometheus (node_exporter, kubelet, Flux, Traefik) |
-| `night_screen` | A static dark frame for an overnight playlist window | none |
+| `big_clock` | Large clock, with weekday, date, week and day-of-year in a band below | local time |
+| `local_weather` | Sky-coloured band (blue for cloud and rain, yellow for sun, black at night) with current conditions and six facts; a 12-hour strip with chance of rain; a 5-day row | [Open-Meteo](https://open-meteo.com/), no key |
+| `bbc_news` | Lead story plus three cards, each with the opening paragraphs of the article rather than the feed's one line; section is selectable | BBC RSS and article pages |
+| `ai_usage` | Left: cloud spend avoided by a local LLM box today (priced at Claude Sonnet API rates), lifetime gateway totals, GPU busy/now/memory. Right: Claude Code plan limits (session, weekly, per-model) read with the Pi's own Claude login, GPU busy by hour, gateway spend by client and electricity | Prometheus, [LiteLLM](https://github.com/BerriAI/litellm) proxy API, Claude OAuth usage endpoint |
+| `home_energy` | Day chart of solar, house load and battery; today's solar, grid and battery totals; a band of live solar, battery, grid and house figures | Home Assistant REST API (FoxESS, Solcast, myenergi, Octopus entities) |
+| `bitcoin_miners` | Bitaxe hashrate, temperature, power and shares; odds of finding a block today and within a year; best share against network difficulty; node stats | Bitaxe/ForgeOS JSON API, `bitcoind` exporter in Prometheus |
+| `homelab_status` | Host cards with CPU, load, memory and disk gauges; k3s summary; monitoring, Flux, Traefik and storage tiles; a one-line alerts band | Prometheus (node_exporter, kubelet, Flux, Traefik) |
+| `night_screen` | A static near-black frame for an overnight playlist window | none |
 
-Also included:
+Every screen renders from live data at refresh time. When a data source is unreachable a screen raises an
+error rather than drawing zeros, so InkyPi keeps the previous frame and shows the reason in the web UI.
 
-- `src/plugins/_theme/` – a shared stylesheet and a `ThemedPlugin` mixin the screens use for a consistent look.
-- `src/utils/homelab.py` – small Prometheus and Home Assistant clients, plus the local settings loader.
-- `scripts/spectra6_preview.py` – previews a rendered frame through the same 6-colour quantiser the Inky driver uses, so you can see what the panel will actually show before deploying.
-- `scripts/claude_usage_exporter.py` – optional: aggregates Claude Code transcripts (tokens and API-equivalent cost) on the machine you use Claude Code on and pushes a JSON snapshot to the Pi; the AI usage screen adds a cost row when the snapshot is present (see `install/examples/`).
-- `scripts/deploy_to_pi.sh` – rsyncs this tree to the Pi, runs the InkyPi installer or updater, copies secrets and builds the device config from `src/config/device_dev.json`.
+## Also in the repo
 
-Two small changes to InkyPi itself: `src/inkypi.py` runs the web server with four threads instead of one
-(with one, the UI is unreachable for the ~30 s an e-ink refresh takes), and the deploy script turns off the
-start-up splash for the same reason.
+- `src/plugins/_theme/` – shared stylesheet and a `ThemedPlugin` mixin the screens use for a consistent look.
+- `src/utils/homelab.py` – small Prometheus and Home Assistant clients, and the local settings loader.
+- `scripts/spectra6_preview.py` – previews a rendered frame through the Spectra 6 quantiser so you can see
+  what the panel will actually show before deploying.
+- `scripts/deploy_to_pi.sh user@host` – rsyncs this tree to the Pi, runs the InkyPi installer (first time) or
+  updater, copies `.env`, builds `src/config/device.json` from `src/config/device_dev.json` and restarts the
+  service. `DEPLOY_QUICK=1` skips the installer for a code-only sync that takes a few seconds.
+- `scripts/claude_usage_exporter.py` – optional. Aggregates Claude Code transcripts (tokens and
+  API-equivalent cost) on the machine you use Claude Code on and pushes a JSON snapshot to the Pi; the AI
+  usage screen adds a cost row when the snapshot is present and fresh. See `install/examples/`.
+
+## Changes to upstream
+
+- `src/inkypi.py`: the web server runs with four threads instead of one. With one thread, a "Display"
+  click blocks every other request for the 30 seconds an e-ink refresh takes and the UI looks dead.
+- The deploy script writes `"startup": false` into the device config so the splash isn't pushed to the
+  panel on every restart (it also delays the web port opening by about 35 seconds).
 
 ## Design notes for the Spectra 6 panel
 
@@ -43,25 +60,30 @@ The panel has six inks: black, white, red, yellow, green and blue. Anything else
 use flat fills in the exact colours the driver quantises to at its default saturation (`#cd2425`, `#1e1dae`,
 `#e7de23`) and avoid greys, gradients and thin glyphs. Small middle-dot separators and anti-aliased text under
 about 12 px vanish after quantisation, which is why the theme uses a solid square for separators and keeps
-body text at 12 px or larger. `scripts/spectra6_preview.py` will show you the problem before the panel does.
+body text at 12 px or larger. A full refresh takes about 30 seconds and flashes through every colour, so the
+default playlist cycles every 10 minutes and InkyPi skips the refresh when a frame is identical to the last.
 
 ## Setup
 
-1. Follow the InkyPi installation in `docs/UPSTREAM_README.md`, or use `scripts/deploy_to_pi.sh user@host`
-   from a checkout on your workstation.
+1. Flash Raspberry Pi OS Lite and get the Pi on the network, then from a checkout on your workstation run
+   `scripts/deploy_to_pi.sh user@host`. It runs InkyPi's own installer, which enables SPI and I2C, installs
+   headless Chromium and the Python environment, and creates the `inkypi` service. Reboot once after the
+   first install so the interfaces come up. (InkyPi's manual steps are in `docs/UPSTREAM_README.md`.)
 2. Copy `src/config/local_settings.example.json` to `src/config/local_settings.json` and fill in your
-   Prometheus, Home Assistant, LiteLLM and miner addresses, host names and any entity id overrides. The file is
-   gitignored. Every value can also be set per screen in the web UI.
-3. Add tokens under **API Keys** in the web UI (or to `.env`): `HOME_ASSISTANT_TOKEN` for the energy screen,
-   `LITELLM_MASTER_KEY` for the gateway totals.
-4. For the Claude plan limits, log the Pi into Claude: install Claude Code on it (`curl -fsSL https://claude.ai/install.sh | bash`),
-   run `claude auth login`, and set `claude_credentials` in `local_settings.json` to that user's `~/.claude/.credentials.json`.
-   The plugin refreshes the token itself, so nothing else needs to run. Note that `claude setup-token` is not enough:
-   its token lacks the `user:profile` scope the usage endpoint requires. The exporter in `install/examples/` is optional
-   and only adds token and cost figures.
-5. Add the screens to a playlist. For a dark panel overnight, create a second playlist with a window such as
-   22:00 to 07:00 containing only the Night Screen; InkyPi picks the playlist with the shortest window.
+   Prometheus, Home Assistant, LiteLLM and miner addresses, host names, the Claude credentials path and any
+   entity id overrides. The file is gitignored and is synced to the Pi by the deploy script. Every value can
+   also be set per screen in the web UI.
+3. Add tokens under **API Keys** in the web UI (or to `.env`): `HOME_ASSISTANT_TOKEN` for the energy
+   screen, `LITELLM_MASTER_KEY` for the lifetime gateway totals.
+4. For the Claude plan limits, log the Pi into Claude: install Claude Code on it
+   (`curl -fsSL https://claude.ai/install.sh | bash`), run `claude auth login`, and point `claude_credentials`
+   in `local_settings.json` at that user's `~/.claude/.credentials.json`. Access tokens last eight hours;
+   the plugin refreshes them itself and writes the rotated tokens back, so nothing else needs to run.
+   `claude setup-token` is not enough: its token lacks the `user:profile` scope the usage endpoint requires.
+5. Build the playlist in the web UI. For a dark panel overnight, create a second playlist with a window
+   such as 22:00 to 07:00 containing only the Night Screen; InkyPi picks the playlist with the shortest
+   window, and the static frame means the panel refreshes once at the start of the window and then holds.
 
 ## Licence
 
-GPL-3.0, as InkyPi. See `LICENSE` and `docs/attribution.md` for the fonts and icons InkyPi bundles.
+GPL-3.0, as InkyPi. See `LICENSE`, and `docs/attribution.md` for the fonts and icons InkyPi bundles.

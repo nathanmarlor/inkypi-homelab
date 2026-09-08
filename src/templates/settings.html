@@ -285,6 +285,8 @@
                             <label for="button_{{ label }}" class="form-label" style="min-width: 100px;">Button {{ label }} ({{ position }}):</label>
                             <select id="button_{{ label }}" name="button_{{ label }}" class="form-input" style="max-width: 400px;">
                                 <option value="">Nothing</option>
+                                <option value="action:previous" {% if current.get('action') == 'previous' %}selected{% endif %}>Previous screen in playlist</option>
+                                <option value="action:next" {% if current.get('action') == 'next' %}selected{% endif %}>Next screen in playlist</option>
                                 {% for playlist in playlists %}{% for inst in playlist.plugins %}
                                 {% set value = playlist.name ~ '|' ~ inst.plugin_id ~ '|' ~ inst.name %}
                                 <option value="{{ value }}" {% if current.get('playlist') == playlist.name and current.get('plugin_id') == inst.plugin_id and current.get('plugin_instance') == inst.name %}selected{% endif %}>{{ playlist.name }} · {{ inst.name }}</option>

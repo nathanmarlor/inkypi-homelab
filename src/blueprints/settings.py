@@ -74,7 +74,9 @@ def save_settings():
         buttons = {}
         for label, _ in BUTTON_LABELS:
             value = form_data.get(f"button_{label}")
-            if value:
+            if value in ("action:next", "action:previous"):
+                buttons[label] = {"action": value.split(":")[1]}
+            elif value:
                 playlist, plugin_id, instance = value.split("|", 2)
                 buttons[label] = {"playlist": playlist, "plugin_id": plugin_id, "plugin_instance": instance}
         settings["buttons"] = buttons

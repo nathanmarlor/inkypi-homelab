@@ -7,8 +7,13 @@ immediately when the button is pressed:
 
     "buttons": {
         "A": {"playlist": "Default", "plugin_id": "ai_usage", "plugin_instance": "AI Usage"},
-        "B": {"playlist": "Default", "plugin_id": "bbc_news", "plugin_instance": "BBC News"}
+        "B": {"playlist": "Default", "plugin_id": "bbc_news", "plugin_instance": "BBC News"},
+        "C": {"action": "previous"},
+        "D": {"action": "next"}
     }
+
+"previous" and "next" step through the currently active playlist and move its position,
+so the scheduler carries on from the screen you stepped to.
 
 The listener is a daemon thread using the gpiod v2 API. If gpiod or the GPIO chip is
 unavailable (dev machines, non-Pi hosts) it logs once and does nothing.
@@ -141,21 +146,35 @@ class ButtonListener:
         self.press(label)
 
     def press(self, label):
-        """Displays the plugin instance mapped to the button, if any. Safe to call from any thread."""
+        """Runs the shortcut mapped to the button, if any. Safe to call from any thread."""
         mapping = (self.device_config.get_config("buttons", default={}) or {}).get(label)
         if not mapping:
             logger.info(f"Button {label} pressed, no shortcut configured")
             return
         playlist_manager = self.device_config.get_playlist_manager()
-        playlist = playlist_manager.get_playlist(mapping.get("playlist"))
-        instance = playlist.find_plugin(mapping.get("plugin_id"), mapping.get("plugin_instance")) if playlist else None
-        if not instance:
-            logger.warning(f"Button {label} shortcut points at a missing playlist entry: {mapping}")
-            return
+        action = mapping.get("action")
+        if action in ("next", "previous"):
+            playlist = playlist_manager.determine_active_playlist(self.refresh_task._get_current_datetime())
+            if not playlist or not playlist.plugins:
+                logger.info(f"Button {label} pressed, no active playlist to step through")
+                return
+            step = 1 if action == "next" else -1
+            index = ((playlist.current_plugin_index or 0) + step) % len(playlist.plugins)
+            instance = playlist.plugins[index]
+        else:
+            playlist = playlist_manager.get_playlist(mapping.get("playlist"))
+            instance = playlist.find_plugin(mapping.get("plugin_id"), mapping.get("plugin_instance")) if playlist else None
+            if not instance:
+                logger.warning(f"Button {label} shortcut points at a missing playlist entry: {mapping}")
+                return
+            index = playlist.plugins.index(instance)
         logger.info(f"Button {label} pressed, showing {instance.plugin_id}/{instance.name}")
         self.led.blink()
         try:
             self.refresh_task.manual_update(PlaylistRefresh(playlist, instance, force=True))
+            # keep the playlist position in step with what is on the panel
+            playlist.current_plugin_index = index
+            self.device_config.write_config()
         except Exception as e:
             logger.error(f"Button {label} refresh failed: {e}")
         finally:

@@ -12,6 +12,11 @@ immediately when the button is pressed:
 
 The listener is a daemon thread using the gpiod v2 API. If gpiod or the GPIO chip is
 unavailable (dev machines, non-Pi hosts) it logs once and does nothing.
+
+Feedback: the panel takes ~30 s to redraw and cannot show anything sooner, so the Pi's
+green activity LED (next to the buttons) blinks fast from the moment of the press until
+the panel has finished. Presses made while a refresh is running are not lost: the most
+recent one is acted on once the refresh completes.
 """
 
 import logging
@@ -25,8 +30,40 @@ logger = logging.getLogger(__name__)
 
 BUTTON_PINS = {"A": 5, "B": 6, "C": 16, "D": 24}
 DEBOUNCE_SECONDS = 0.4
-STALE_EVENT_SECONDS = 2.0  # presses that queued while a refresh was running are dropped
 CONSUMER = "inkypi-buttons"
+LED_PATH = "/sys/class/leds/ACT"
+
+
+class ActivityLed:
+    """Fast-blinks the Pi's activity LED while a button press is being handled."""
+
+    def __init__(self, path=LED_PATH):
+        self.path = path
+        self.previous_trigger = None
+
+    def _write(self, name, value):
+        with open(f"{self.path}/{name}", "w") as f:
+            f.write(str(value))
+
+    def blink(self):
+        try:
+            with open(f"{self.path}/trigger") as f:
+                current = f.read()
+            if self.previous_trigger is None:
+                self.previous_trigger = current[current.index("[") + 1:current.index("]")]
+            self._write("trigger", "timer")
+            self._write("delay_on", 100)
+            self._write("delay_off", 100)
+        except Exception as e:
+            logger.debug(f"Activity LED unavailable: {e}")
+
+    def restore(self):
+        if self.previous_trigger is None:
+            return
+        try:
+            self._write("trigger", self.previous_trigger)
+        except Exception as e:
+            logger.debug(f"Activity LED restore failed: {e}")
 
 
 class ButtonListener:
@@ -38,6 +75,7 @@ class ButtonListener:
         self.running = False
         self.request = None
         self.last_press = {}
+        self.led = ActivityLed()
 
     def start(self):
         try:
@@ -83,8 +121,11 @@ class ButtonListener:
             try:
                 if not self.request.wait_edge_events(timedelta(seconds=1)):
                     continue
-                for event in self.request.read_edge_events():
-                    self._on_event(event)
+                # Events that queued while a press was being handled arrive as a batch:
+                # act on the most recent one only, so the last button pressed wins.
+                events = list(self.request.read_edge_events())
+                if events:
+                    self._on_event(events[-1])
             except Exception:
                 logger.exception("Button listener error")
                 time.sleep(1)
@@ -93,13 +134,10 @@ class ButtonListener:
         label = self.offsets.get(event.line_offset)
         if not label:
             return
-        now = time.monotonic()
-        if now - event.timestamp_ns / 1e9 > STALE_EVENT_SECONDS:
-            logger.debug(f"Ignoring stale press of button {label}")
+        pressed_at = event.timestamp_ns / 1e9
+        if pressed_at - self.last_press.get(label, 0) < DEBOUNCE_SECONDS:
             return
-        if now - self.last_press.get(label, 0) < DEBOUNCE_SECONDS:
-            return
-        self.last_press[label] = now
+        self.last_press[label] = pressed_at
         self.press(label)
 
     def press(self, label):
@@ -115,7 +153,10 @@ class ButtonListener:
             logger.warning(f"Button {label} shortcut points at a missing playlist entry: {mapping}")
             return
         logger.info(f"Button {label} pressed, showing {instance.plugin_id}/{instance.name}")
+        self.led.blink()
         try:
             self.refresh_task.manual_update(PlaylistRefresh(playlist, instance, force=True))
         except Exception as e:
             logger.error(f"Button {label} refresh failed: {e}")
+        finally:
+            self.led.restore()

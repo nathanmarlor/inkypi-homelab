@@ -278,7 +278,7 @@
                         Buttons <span class="collapsible-icon">▼</span>
                     </button>
                     <div class="settings-container collapsible-content">
-                        <span style="color: var(--text-secondary);">The four buttons on the back of an Inky Impression, top to bottom with the panel landscape and the right way up (D is the top one). A press shows the chosen screen straight away; the playlist carries on at the next cycle.</span>
+                        <span style="color: var(--text-secondary);">The four buttons on the back of an Inky Impression, top to bottom. A press shows the chosen screen straight away; the playlist carries on at the next cycle.</span>
                         {% for label, position in button_labels %}
                         {% set current = device_settings.get('buttons', {}).get(label, {}) %}
                         <div class="form-group">

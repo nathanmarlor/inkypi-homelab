@@ -6,8 +6,7 @@ import pytz
 import logging
 import io
 
-# Listed as they sit with the panel landscape and the right way up: D is the top button.
-BUTTON_LABELS = [("D", "top"), ("C", "second"), ("B", "third"), ("A", "bottom")]
+BUTTON_LABELS = [("A", "top"), ("B", "second"), ("C", "third"), ("D", "bottom")]
 
 # Try to import cysystemd for journal reading (Linux only)
 try:

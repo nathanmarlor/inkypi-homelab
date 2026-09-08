@@ -36,7 +36,7 @@ driver uses (`scripts/spectra6_preview.py`).
 The four buttons on the back of the Impression are shortcuts. Map each one to a playlist screen under
 **Buttons** on the Settings page (or in `device.json` as `"buttons": {"A": {"playlist": ..., "plugin_id": ...,
 "plugin_instance": ...}}`); a press shows that screen straight away and the playlist carries on at the next
-cycle. The listener (`src/buttons.py`) uses gpiod on GPIO 5, 6, 16 and 24 (A to D; with the panel landscape and the right way up, D is the top button) and stays
+cycle. The listener (`src/buttons.py`) uses gpiod on GPIO 5, 6, 16 and 24 (A to D, top to bottom) and stays
 quiet on machines without a GPIO chip. The 13.3" board wires button C to GPIO 25 instead of 16.
 
 Every screen renders from live data at refresh time. When a data source is unreachable a screen raises an

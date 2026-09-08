@@ -273,6 +273,27 @@
                         {% endif %}
                     </div>
                 </div>
+                <div class="collapsible">
+                    <button type="button" class="collapsible-header" onclick="toggleCollapsible(this)">
+                        Buttons <span class="collapsible-icon">▼</span>
+                    </button>
+                    <div class="settings-container collapsible-content">
+                        <span style="color: var(--text-secondary);">The four buttons on the back of an Inky Impression, top to bottom. A press shows the chosen screen straight away; the playlist carries on at the next cycle.</span>
+                        {% for label, position in button_labels %}
+                        {% set current = device_settings.get('buttons', {}).get(label, {}) %}
+                        <div class="form-group">
+                            <label for="button_{{ label }}" class="form-label" style="min-width: 100px;">Button {{ label }} ({{ position }}):</label>
+                            <select id="button_{{ label }}" name="button_{{ label }}" class="form-input" style="max-width: 400px;">
+                                <option value="">Nothing</option>
+                                {% for playlist in playlists %}{% for inst in playlist.plugins %}
+                                {% set value = playlist.name ~ '|' ~ inst.plugin_id ~ '|' ~ inst.name %}
+                                <option value="{{ value }}" {% if current.get('playlist') == playlist.name and current.get('plugin_id') == inst.plugin_id and current.get('plugin_instance') == inst.name %}selected{% endif %}>{{ playlist.name }} · {{ inst.name }}</option>
+                                {% endfor %}{% endfor %}
+                            </select>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </form>
  

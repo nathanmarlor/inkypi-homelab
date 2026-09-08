@@ -6,6 +6,8 @@ import pytz
 import logging
 import io
 
+BUTTON_LABELS = [("A", "top"), ("B", "second"), ("C", "third"), ("D", "bottom")]
+
 # Try to import cysystemd for journal reading (Linux only)
 try:
     from cysystemd.reader import JournalReader, JournalOpenMode, Rule
@@ -29,7 +31,9 @@ settings_bp = Blueprint("settings", __name__)
 def settings_page():
     device_config = current_app.config['DEVICE_CONFIG']
     timezones = sorted(pytz.all_timezones_set)
-    return render_template('settings.html', device_settings=device_config.get_config(), timezones = timezones)
+    playlists = device_config.get_playlist_manager().playlists
+    return render_template('settings.html', device_settings=device_config.get_config(), timezones = timezones,
+                           playlists=playlists, button_labels=BUTTON_LABELS)
 
 @settings_bp.route('/save_settings', methods=['POST'])
 def save_settings():
@@ -67,6 +71,13 @@ def save_settings():
                 "contrast": float(form_data.get("contrast", "1.0"))
             }
         }
+        buttons = {}
+        for label, _ in BUTTON_LABELS:
+            value = form_data.get(f"button_{label}")
+            if value:
+                playlist, plugin_id, instance = value.split("|", 2)
+                buttons[label] = {"playlist": playlist, "plugin_id": plugin_id, "plugin_instance": instance}
+        settings["buttons"] = buttons
         if "inky_saturation" in form_data:
             settings["image_settings"]["inky_saturation"] = float(form_data.get("inky_saturation", "0.5"))
         device_config.update_config(settings)

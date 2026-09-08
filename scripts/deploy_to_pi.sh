@@ -52,6 +52,7 @@ cfg = {
     "image_settings": dev.get("image_settings", {}),
     "plugin_order": dev.get("plugin_order", []),
     "playlist_config": dev.get("playlist_config", {}),
+    "buttons": dev.get("buttons", {}),
     "refresh_info": {"refresh_time": None, "image_hash": None, "refresh_type": None, "plugin_id": None},
 }
 # no display_type: the Inky driver auto-detects the panel and writes the resolution on first run

@@ -1,7 +1,7 @@
 """Physical button shortcuts for Inky Impression boards.
 
 The Impression has four tactile buttons on the back wired to GPIO 5, 6, 16 and 24
-(A to D, top to bottom; the 13.3" board uses 25 instead of 16). Each button can be
+(A to D; with the panel landscape and the right way up D is the top button; the 13.3" board uses 25 instead of 16). Each button can be
 mapped in the device config to a playlist plugin instance which is displayed
 immediately when the button is pressed:
 

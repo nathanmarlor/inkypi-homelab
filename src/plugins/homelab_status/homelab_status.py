@@ -13,9 +13,10 @@ DEFAULT_PROMETHEUS_URL = local_setting("prometheus_url", "http://prometheus.loca
 # Friendly names for node_exporter instances, keyed by Prometheus instance label.
 # Set "host_names" in local_settings.json; with none configured every host-metrics instance is shown by its label.
 HOST_NAMES = local_setting("host_names", {})
+# Optional grouping of those instances into captioned columns, e.g. {"Proxmox": ["pve", "m70q-1"], "Storage": ["nas"]}.
+HOST_GROUPS = local_setting("host_groups", {})
 HOST_JOB = local_setting("host_metrics_job", "host-metrics")
 TARGET_NAMES = {
-    "asicos-nano": "Bitaxe Nano",
     "nerdqaxe-exporter": "NerdQAxe",
     "bitcoind": "Bitcoin node",
     "lemonade": "Lemonade",
@@ -77,8 +78,15 @@ class HomelabStatus(ThemedPlugin):
         load = {m.get("instance"): v for m, v in prom.rows('node_load1{job="' + HOST_JOB + '"}')}
         cpu_pct = {m.get("instance"): v for m, v in prom.rows('100 * (1 - avg by (instance)(rate(node_cpu_seconds_total{job="' + HOST_JOB + '",mode="idle"}[5m])))')}
         cpus = {m.get("instance"): v for m, v in prom.rows('count by (instance)(node_cpu_seconds_total{job="' + HOST_JOB + '",mode="idle"})')}
-        mem_pct = {m.get("instance"): v for m, v in prom.rows('100 * (1 - node_memory_MemAvailable_bytes{job="' + HOST_JOB + '"} / node_memory_MemTotal_bytes)')}
+        # Hypervisors pin hugepages to their VMs, which makes MemAvailable look exhausted; measure the memory left to the host itself.
         mem_total = {m.get("instance"): v for m, v in prom.rows('node_memory_MemTotal_bytes{job="' + HOST_JOB + '"}')}
+        mem_avail = {m.get("instance"): v for m, v in prom.rows('node_memory_MemAvailable_bytes{job="' + HOST_JOB + '"}')}
+        huge_bytes = {m.get("instance"): v for m, v in prom.rows('node_memory_HugePages_Total{job="' + HOST_JOB + '"} * node_memory_Hugepagesize_bytes')}
+        mem_pct = {}
+        for inst, inst_total in mem_total.items():
+            host_total = inst_total - huge_bytes.get(inst, 0)  # a NAS reports no hugepage series at all
+            if host_total > 0 and inst in mem_avail:
+                mem_pct[inst] = min(100.0, 100 * (1 - mem_avail[inst] / host_total))
         disk_pct = {m.get("instance"): v for m, v in prom.rows('100 * (1 - node_filesystem_avail_bytes{job="' + HOST_JOB + '",mountpoint="/"} / node_filesystem_size_bytes{job="' + HOST_JOB + '",mountpoint="/"})')}
         temp = {m.get("instance"): v for m, v in prom.rows('max by (instance)(node_hwmon_temp_celsius{job="' + HOST_JOB + '"})')}
         hosts = []
@@ -96,14 +104,19 @@ class HomelabStatus(ThemedPlugin):
                 "cores": int(cpus.get(inst, 0)),
                 "mem_pct": int(mem_pct.get(inst, 0)),
                 "mem_gb": mem_total.get(inst, 0) / 2**30,
+                "huge_gb": huge_bytes.get(inst, 0) / 2**30,
                 "disk_pct": int(disk_pct.get(inst, 0)),
                 "temp": temp.get(inst),
             })
 
         # ---- services ----
+        # Flux dropped gotk_reconcile_condition in 2.4; fall back to reconcile activity when it is absent.
         flux_ready = prom.scalar('sum(gotk_reconcile_condition{type="Ready",status="True"})')
         flux_failed = prom.scalar('sum(gotk_reconcile_condition{type="Ready",status="False"})')
         flux_failed_names = [m.get("name", "?") for m, v in prom.rows('gotk_reconcile_condition{type="Ready",status="False"} == 1')]
+        flux_reconciles_h = prom.scalar("sum(increase(gotk_reconcile_duration_seconds_count[1h]))")
+        flux_controllers = int(prom.scalar('count(up{job="monitoring/flux-system"} == 1)'))
+        flux_controllers_total = int(prom.scalar('count(up{job="monitoring/flux-system"})'))
         req_min = prom.scalar("sum(rate(traefik_service_requests_total[15m]))*60")
         err_min = prom.scalar('sum(rate(traefik_service_requests_total{code=~"5.."}[15m]))*60')
         pvc_used = prom.scalar("sum(kubelet_volume_stats_used_bytes)")
@@ -112,20 +125,19 @@ class HomelabStatus(ThemedPlugin):
             (m.get("persistentvolumeclaim", "?"), v)
             for m, v in prom.rows("100 * kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 85")
         ]
+        # Longhorn replicates every volume to each node, so one node's pool is the cluster's real disk footprint.
+        lh_used = prom.scalar("max(sum by (node)(longhorn_node_storage_usage_bytes))")
+        lh_cap = prom.scalar("max(sum by (node)(longhorn_node_storage_capacity_bytes))")
+        lh_nodes = int(prom.scalar("count(sum by (node)(longhorn_node_storage_capacity_bytes))"))
+        m5_thermal = prom.scalar('sum(increase(m5_throttle_residency_total{reason=~"thm_.*"}[24h]))')
+        sites_up = int(prom.scalar('count(up{job="public-sites"} == 1)'))
+        sites_total = int(prom.scalar('count(up{job="public-sites"})'))
+        sites_down = [m.get("instance", "?").split("//")[-1].split("/")[0] for m, v in prom.rows('up{job="public-sites"} == 0')]
+        dns_up = int(prom.scalar('count(up{job="' + HOST_JOB + '",instance=~"dns-.*"} == 1)'))
+        dns_total = int(prom.scalar('count(up{job="' + HOST_JOB + '",instance=~"dns-.*"})'))
+        bao_up = prom.scalar('max(up{job="openbao"})')
         node_sync = prom.scalar("bitcoin_verification_progress")
-        lemonade_models = int(prom.scalar("sum(lemonade_loaded_models)"))
-        m5_gfx_temp = prom.scalar("max(m5_gfx_temp_celsius)")
-        m5_throttle = prom.scalar("sum(increase(m5_throttle_residency_total[24h]))")
-        m5_thermal = prom.scalar('sum(increase(m5_throttle_residency_total{reason=~"thm_.*|prochot"}[24h]))')
-
-        ns_mem = [(m.get("namespace", "?"), v / 2**30) for m, v in prom.rows('topk(6, sum by (namespace)(container_memory_working_set_bytes{container!="",namespace!=""}))')]
-        ns_mem.sort(key=lambda kv: -kv[1])
-        ns_max = max([v for _, v in ns_mem] + [0.1])
-        pvc_rows = [(m.get("persistentvolumeclaim", "?"), m.get("namespace", ""), v) for m, v in prom.rows("topk(5, 100 * kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes)")]
-        fullest = {}
-        for n, _, v in pvc_rows:
-            fullest[n] = max(fullest.get(n, 0), v)
-        pvc_top = sorted(fullest.items(), key=lambda kv: -kv[1])[:5]
+        node_peers = int(prom.scalar("bitcoin_peers"))
 
         cluster = {
             "pods": int(sum(pods.values())),
@@ -134,46 +146,50 @@ class HomelabStatus(ThemedPlugin):
             "cores_used": prom.scalar('sum(rate(container_cpu_usage_seconds_total{id="/"}[5m]))'),
             "cores_total": int(prom.scalar("sum(machine_cpu_cores)")),
             "containers": int(sum(containers.values())),
+            "mem_used_gb": prom.scalar('sum(container_memory_working_set_bytes{id="/"})') / 2**30,
+            "mem_alloc_gb": prom.scalar('sum(kube_node_status_allocatable{resource="memory"})') / 2**30,
+            "restarts_24h": int(prom.scalar("sum(increase(kube_pod_container_status_restarts_total[24h]))")),
+            "lh_used_gb": lh_used / 2**30,
+            "lh_cap_gb": lh_cap / 2**30,
+            "lh_nodes": lh_nodes,
         }
 
+        if flux_ready + flux_failed > 0:
+            flux_tile = {"label": "Flux", "value": f"{int(flux_ready)}/{int(flux_ready + flux_failed)}", "sub": ", ".join(flux_failed_names) if flux_failed_names else "reconciled", "bad": flux_failed > 0}
+        else:
+            flux_tile = {"label": "Flux", "value": f"{flux_controllers}/{flux_controllers_total}", "sub": f"{int(flux_reconciles_h)} runs/h", "bad": flux_controllers < flux_controllers_total}
+        storage_tile = {"label": "Volumes", "value": f"{int(100 * pvc_used / pvc_cap) if pvc_cap else 0}%", "sub": f"{len(pvc_full)} vol{'s' if len(pvc_full) != 1 else ''} over 85%" if pvc_full else f"{pvc_used / 2**30:.0f} of {pvc_cap / 2**30:.0f} GB used", "bad": bool(pvc_full)}
         tiles = [
-            {"label": "Scrape targets", "value": f"{total - len(down)}/{total}", "sub": ", ".join(down) if down else "all up", "bad": bool(down)},
-            {"label": "Flux", "value": f"{int(flux_ready)}/{int(flux_ready + flux_failed)}", "sub": ", ".join(flux_failed_names) if flux_failed_names else "reconciled", "bad": flux_failed > 0},
+            {"label": "Monitoring", "value": f"{total - len(down)}/{total}", "sub": ", ".join(down) if down else "all targets up", "bad": bool(down)},
+            flux_tile,
             {"label": "Traefik", "value": f"{req_min:.0f}", "sub": (f"req/min, {err_min:.1f} 5xx/min" if err_min else "req/min, no 5xx"), "bad": err_min > 1},
-            {"label": "PVC storage", "value": f"{int(100 * pvc_used / pvc_cap) if pvc_cap else 0}%", "sub": f"{len(pvc_full)} over 85%" if pvc_full else f"{pvc_used / 2**30:.0f} of {pvc_cap / 2**30:.0f} GB", "bad": bool(pvc_full)},
-            {"label": "Bitcoin node", "value": "synced" if node_sync >= 0.9999 else f"{100 * node_sync:.1f}%", "sub": f"{int(prom.scalar('bitcoin_peers'))} peers", "bad": node_sync < 0.999},
-            {"label": "M5 inference", "value": f"{lemonade_models} model{'s' if lemonade_models != 1 else ''}", "sub": f"GPU {m5_gfx_temp:.0f}C" + (", throttling" if m5_thermal > 0 else ", capped" if m5_throttle > 0 else ", cool"), "bad": m5_thermal > 0},
+            storage_tile,
+            {"label": "Public sites", "value": f"{sites_up}/{sites_total}", "sub": ", ".join(sites_down) if sites_down else "all responding", "bad": sites_up < sites_total},
+            {"label": "DNS", "value": f"{dns_up}/{dns_total}", "sub": "Technitium pair" if dns_up == dns_total else "resolver down", "bad": dns_up < dns_total},
+            {"label": "OpenBao", "value": "up" if bao_up else "down", "sub": "secrets vault", "bad": not bao_up},
+            {"label": "Bitcoin node", "value": "synced" if node_sync >= 0.9999 else f"{100 * node_sync:.1f}%", "sub": f"{node_peers} peers", "bad": node_sync < 0.999},
         ]
 
-        # ---- departures board rows ----
-        def row(service, detail, status, note=""):
-            return {"service": service, "detail": detail, "status": status, "note": note}
-
-        rows = []
-        rows.append(row("k3s cluster", f"{int(sum(pods.values()))} pods on {len(nodes)} nodes", "on time"))
-        rows.append(row("Flux GitOps", f"{int(flux_ready)} of {int(flux_ready + flux_failed)} reconciled", "delayed" if flux_failed else "on time", ", ".join(flux_failed_names)))
-        rows.append(row("Traefik ingress", f"{req_min:.0f} req/min", "delayed" if err_min > 1 else "on time", f"{err_min:.1f} 5xx/min" if err_min else "no errors"))
-        rows.append(row("Monitoring", f"{total - len(down)} of {total} targets up", "delayed" if down else "on time", ", ".join(down)))
-        rows.append(row("Storage", f"{int(100 * pvc_used / pvc_cap) if pvc_cap else 0}% used", "delayed" if pvc_full else "on time", f"{len(pvc_full)} volumes over 85%" if pvc_full else ""))
-        rows.append(row("Bitcoin node", "synced" if node_sync >= 0.9999 else f"{100 * node_sync:.1f}% synced", "on time" if node_sync >= 0.999 else "delayed", f"{int(prom.scalar('bitcoin_peers'))} peers"))
-        rows.append(row("M5 inference", f"{lemonade_models} model{'s' if lemonade_models != 1 else ''} loaded", "delayed" if m5_thermal > 0 else "on time", f"GPU {m5_gfx_temp:.0f}C" + (", thermal throttle" if m5_thermal > 0 else ", power cap" if m5_throttle > 0 else "")))
-        for h in hosts:
-            if not h["online"]:
-                rows.append(row(h["name"], "no metrics", "cancelled", "host offline"))
-                continue
-            problems_here = []
-            if h["mem_pct"] > 90:
-                problems_here.append(f"memory {h['mem_pct']}%")
-            if h["disk_pct"] > 85:
-                problems_here.append(f"disk {h['disk_pct']}%")
-            rows.append(row(h["name"], f"mem {h['mem_pct']}%, disk {h['disk_pct']}%", "delayed" if problems_here else "on time", ", ".join(problems_here)))
-        delays = sum(1 for r in rows if r["status"] != "on time")
+        # ---- host groups for the cards row ----
+        by_inst = {inst: h for inst, h in zip(host_keys, hosts)}
+        groups = []
+        placed = set()
+        for gname, members in HOST_GROUPS.items():
+            members = [i for i in members if i in by_inst]
+            if members:
+                groups.append({"name": gname, "hosts": [by_inst[i] for i in members]})
+                placed.update(members)
+        rest = [by_inst[i] for i in host_keys if i not in placed]
+        if rest:
+            groups.append({"name": "" if groups else "Hosts", "hosts": rest})
 
         alerts = []
         for name in down:
             alerts.append(f"{name} target down")
         for n in flux_failed_names:
             alerts.append(f"flux {n} failed")
+        if flux_controllers < flux_controllers_total:
+            alerts.append(f"flux {flux_controllers_total - flux_controllers} controller{'s' if flux_controllers_total - flux_controllers != 1 else ''} down")
         if err_min > 1:
             alerts.append(f"traefik {err_min:.0f} 5xx/min")
         pvc_full.sort(key=lambda kv: -kv[1])
@@ -191,21 +207,24 @@ class HomelabStatus(ThemedPlugin):
                     alerts.append(f"{h['name']} disk {h['disk_pct']}%")
         if m5_thermal > 0:
             alerts.append("M5 thermal throttling")
+        for site in sites_down:
+            alerts.append(f"{site} down")
+        if dns_up < dns_total:
+            alerts.append(f"dns {dns_total - dns_up} of {dns_total} down")
+        if not bao_up:
+            alerts.append("openbao down")
+        if node_sync < 0.999:
+            alerts.append(f"bitcoin node {100 * node_sync:.1f}% synced")
 
         template_params = {
             "alerts": alerts,
             "cluster": cluster,
-            "rows": rows,
-            "delays": delays,
             "updated": now.strftime(time_format).lstrip("0"),
             "date": now.strftime("%A %-d %B"),
             "tiles": tiles,
             "nodes": nodes,
             "hosts": hosts,
-            "pods_total": int(sum(pods.values())),
-            "problems": len(down) + int(flux_failed) + (1 if pvc_full else 0),
-            "ns_mem": [(n, v, int(100 * v / ns_max)) for n, v in ns_mem],
-            "pvc_top": pvc_top,
+            "groups": groups,
             "plugin_settings": settings,
         }
         dimensions = device_config.get_resolution()

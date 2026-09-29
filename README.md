@@ -28,7 +28,7 @@ driver uses (`scripts/spectra6_preview.py`).
 | `ai_usage` | Left: cloud spend avoided by a local LLM box today (priced at Claude Sonnet API rates), lifetime gateway totals, GPU busy/now/memory. Right: Claude Code plan limits (session, weekly, per-model) read with the Pi's own Claude login, GPU busy by hour, gateway spend by client and electricity | Prometheus, [LiteLLM](https://github.com/BerriAI/litellm) proxy API, Claude OAuth usage endpoint |
 | `home_energy` | Day chart of solar, house load and battery; today's solar, grid and battery totals; a band of live solar, battery, grid and house figures | Home Assistant REST API (FoxESS, Solcast, myenergi, Octopus entities) |
 | `bitcoin_miners` | Bitaxe hashrate, temperature, power and shares; odds of finding a block today and within a year; best share against network difficulty; node stats | Bitaxe/ForgeOS JSON API, `bitcoind` exporter in Prometheus |
-| `homelab_status` | Host cards with CPU, load, memory and disk gauges; k3s summary; monitoring, Flux, Traefik and storage tiles; a one-line alerts band | Prometheus (node_exporter, kubelet, Flux, Traefik) |
+| `homelab_status` | Host cards grouped by role (hypervisors, storage, AI) with CPU, load, memory and disk gauges; k3s pods, nodes, CPU, memory, Longhorn and restarts; platform tiles for monitoring, Flux, Traefik, volumes, public sites, DNS, OpenBao and the Bitcoin node; a one-line alerts band | Prometheus (node_exporter, kubelet, kube-state-metrics, Longhorn, Flux, Traefik, blackbox) |
 | `night_screen` | A static near-black frame for an overnight playlist window | none |
 
 ### Buttons
@@ -80,8 +80,8 @@ default playlist cycles every 10 minutes and InkyPi skips the refresh when a fra
    headless Chromium and the Python environment, and creates the `inkypi` service. Reboot once after the
    first install so the interfaces come up. (InkyPi's manual steps are in `docs/UPSTREAM_README.md`.)
 2. Copy `src/config/local_settings.example.json` to `src/config/local_settings.json` and fill in your
-   Prometheus, Home Assistant, LiteLLM and miner addresses, host names, the Claude credentials path and any
-   entity id overrides. The file is gitignored and is synced to the Pi by the deploy script. Every value can
+   Prometheus, Home Assistant, LiteLLM and miner addresses, host names and groups (keyed by the node_exporter
+   `instance` label), the Claude credentials path and any entity id overrides. The file is gitignored and is synced to the Pi by the deploy script. Every value can
    also be set per screen in the web UI.
 3. Add tokens under **API Keys** in the web UI (or to `.env`): `HOME_ASSISTANT_TOKEN` for the energy
    screen, `LITELLM_MASTER_KEY` for the lifetime gateway totals.

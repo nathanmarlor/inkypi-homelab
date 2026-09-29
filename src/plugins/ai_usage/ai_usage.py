@@ -138,7 +138,7 @@ class AiUsage(ThemedPlugin):
         started = self.prom_scalar(base, 'process_start_time_seconds{job="litellm"}')
         m5["spend_since"] = datetime.fromtimestamp(started, tz=now.tzinfo).strftime("%-d %b") if started else "restart"
         m5["tokens_today"] = self.prom_scalar(base, f"sum(increase(litellm_total_tokens_metric_total[{w}]))")
-        m5["requests_today"] = self.prom_scalar(base, f"sum(increase(lemonade_model_requests_total[{w}]))")
+        m5["requests_today"] = self.prom_scalar(base, f"sum(increase(litellm_proxy_total_requests_metric_total[{w}]))")
 
         m5["gpu_now"] = self.prom_scalar(base, gpu)
         m5["gpu_avg"] = self.prom_scalar(base, f"avg_over_time({gpu}[{w}])")
@@ -156,7 +156,7 @@ class AiUsage(ThemedPlugin):
         avg_power = self.prom_scalar(base, f'avg_over_time(sum(node_hwmon_power_watt{{instance="{inst}"}})[{w}:30s])')
         m5["kwh_today"] = avg_power * hours / 1000
         m5["electricity_gbp"] = m5["kwh_today"] * pence / 100
-        m5["loaded_models"] = int(self.prom_scalar(base, "sum(lemonade_loaded_models)"))
+        m5["loaded_models"] = int(self.prom_scalar(base, "count(litellm_deployment_state == 0)"))
 
         m5["by_client"] = [
             (name, v) for name, v in self.prom_by_label(base, f"sum by (api_key_alias)(increase(litellm_spend_metric_total[{w}]))", "api_key_alias")

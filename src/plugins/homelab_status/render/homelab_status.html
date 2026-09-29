@@ -2,10 +2,11 @@
 {% block content %}
 <div class="screen column noc">
     <div class="noc-head">
-        <div><span class="hdr-title">Homelab</span><span class="hdr-sub">{% if alerts %}<span class="red"><b>{{ alerts | length }} alert{{ 's' if alerts | length != 1 else '' }}</b></span>{% else %}all systems normal{% endif %}</span></div>
+        <div><span class="hdr-title">Homelab</span><span class="hdr-sub">{{ 'Hosts' if page == 'hosts' else 'Cluster and services' }}<span class="dot"></span>{{ page_no }}/2{% if alerts %}<span class="dot"></span><span class="red"><b>{{ alerts | length }} alert{{ 's' if alerts | length != 1 else '' }}</b></span>{% endif %}</span></div>
         <div class="hdr-meta">{{ date }}<span class="dot"></span>Updated {{ updated }}</div>
     </div>
 
+    {% if page == 'hosts' %}
     <div class="groups">
         {% for g in groups %}
         <div class="hgroup" style="flex-grow: {{ g.hosts | length }};">
@@ -16,13 +17,18 @@
                     <div class="card-head {% if not h.online or h.mem_pct > 90 or h.disk_pct > 85 or h.cpu_pct > 90 %}alert{% endif %}"><span>{{ h.name }}</span><span class="led"></span></div>
                     {% if h.online %}
                     {% set rows = [("cpu", h.cpu_pct, h.cpu_pct ~ "%", h.cpu_pct > 90), ("load", [h.load_pct, 100] | min, "%.1f" | format(h.load), false), ("mem", h.mem_pct, h.mem_pct ~ "%", h.mem_pct > 90), ("disk", h.disk_pct, h.disk_pct ~ "%", h.disk_pct > 85)] %}
+                    <div class="gauges">
                     {% for name, pct, text, bad in rows %}
                     <div class="gauge">
                         <div class="g-row"><span class="g-label">{{ name }}</span><span class="g-val {% if bad %}red{% endif %}">{{ text }}</span></div>
-                        <span class="bar thin"><span class="bar-fill {% if bad %}red{% else %}ink{% endif %}" style="width: {{ pct }}%;"></span><span class="bar-rest"></span></span>
+                        <span class="bar"><span class="bar-fill {% if bad %}red{% else %}ink{% endif %}" style="width: {{ pct }}%;"></span><span class="bar-rest"></span></span>
                     </div>
                     {% endfor %}
-                    <div class="card-foot small">{{ h.cores }}c<span class="dot"></span>{{ h.mem_gb | round | int }}G{% if h.temp %}<span class="dot"></span>{{ h.temp | round | int }}C{% endif %}</div>
+                    </div>
+                    <div class="card-foot">
+                        <div class="foot-line">{{ h.cores }} cores<span class="dot"></span>{{ h.mem_gb | round | int }} GB</div>
+                        <div class="foot-line">{% if h.temp %}{{ h.temp | round | int }}C<span class="dot"></span>{% endif %}{{ h.uptime }}</div>
+                    </div>
                     {% else %}
                     <div class="offline-text">offline</div>
                     {% endif %}
@@ -32,28 +38,29 @@
         </div>
         {% endfor %}
     </div>
-
-    <div class="two">
-        <div class="group">
-            <div class="label sec">k3s cluster</div>
-            <div class="minis">
-                <div class="mini"><div class="mini-val">{{ cluster.pods }}</div><div class="mini-name">pods</div><div class="small">{{ cluster.containers }} containers</div></div>
-                <div class="mini"><div class="mini-val {% if cluster.nodes_ready < cluster.nodes_total %}red{% endif %}">{{ cluster.nodes_ready }}<span class="unit">/ {{ cluster.nodes_total }}</span></div><div class="mini-name">nodes ready</div><div class="small">{{ cluster.cores_total }} cores total</div></div>
-                <div class="mini"><div class="mini-val">{{ "%.1f" | format(cluster.cores_used) }}<span class="unit">cores</span></div><div class="mini-name">cpu in use</div><div class="small">{{ (100 * cluster.cores_used / cluster.cores_total) | round | int if cluster.cores_total else 0 }}% of capacity</div></div>
-                <div class="mini"><div class="mini-val">{{ cluster.mem_used_gb | round | int }}<span class="unit">GB</span></div><div class="mini-name">memory</div><div class="small">{{ (100 * cluster.mem_used_gb / cluster.mem_alloc_gb) | round | int if cluster.mem_alloc_gb else 0 }}% of {{ cluster.mem_alloc_gb | round | int }} GB</div></div>
-                <div class="mini"><div class="mini-val">{{ (100 * cluster.lh_used_gb / cluster.lh_cap_gb) | round | int if cluster.lh_cap_gb else 0 }}<span class="unit">%</span></div><div class="mini-name">longhorn</div><div class="small">{{ cluster.lh_used_gb | round | int }}/{{ cluster.lh_cap_gb | round | int }} GB x{{ cluster.lh_nodes }}</div></div>
-                <div class="mini"><div class="mini-val {% if cluster.restarts_24h > 25 %}red{% endif %}">{{ cluster.restarts_24h }}</div><div class="mini-name">restarts</div><div class="small">containers, 24h</div></div>
-            </div>
-        </div>
-        <div class="group platform">
-            <div class="label sec">Platform</div>
-            <div class="minis">
-                {% for t in tiles %}
-                <div class="mini"><div class="mini-val {% if t.bad %}red{% endif %}">{{ t.value }}</div><div class="mini-name">{{ t.label }}</div><div class="small">{{ t.sub }}</div></div>
-                {% endfor %}
-            </div>
-        </div>
+    {% else %}
+    <div class="label sec">k3s cluster</div>
+    <div class="minis">
+        <div class="mini"><div class="mini-val">{{ cluster.pods }}</div><div class="mini-name">pods</div><div class="small">{{ cluster.containers }} containers</div></div>
+        <div class="mini"><div class="mini-val {% if cluster.nodes_ready < cluster.nodes_total %}red{% endif %}">{{ cluster.nodes_ready }}<span class="unit">/ {{ cluster.nodes_total }}</span></div><div class="mini-name">nodes ready</div><div class="small">{{ cluster.cores_total }} cores, {{ cluster.mem_alloc_gb | round | int }} GB</div></div>
+        <div class="mini"><div class="mini-val">{{ (100 * cluster.cores_used / cluster.cores_total) | round | int if cluster.cores_total else 0 }}<span class="unit">%</span></div><div class="mini-name">cpu</div><div class="small">{{ "%.1f" | format(cluster.cores_used) }} cores in use</div></div>
+        <div class="mini"><div class="mini-val">{{ (100 * cluster.mem_used_gb / cluster.mem_alloc_gb) | round | int if cluster.mem_alloc_gb else 0 }}<span class="unit">%</span></div><div class="mini-name">memory</div><div class="small">{{ cluster.mem_used_gb | round | int }} GB in use</div></div>
+        <div class="mini"><div class="mini-val">{{ (100 * cluster.lh_used_gb / cluster.lh_cap_gb) | round | int if cluster.lh_cap_gb else 0 }}<span class="unit">%</span></div><div class="mini-name">longhorn</div><div class="small">{{ cluster.lh_used_gb | round | int }} of {{ cluster.lh_cap_gb | round | int }} GB</div></div>
+        <div class="mini"><div class="mini-val {% if cluster.restarts_24h > 25 %}red{% endif %}">{{ cluster.restarts_24h }}</div><div class="mini-name">restarts</div><div class="small">last 24 h</div></div>
     </div>
+
+    <div class="label sec svc-sec">Services</div>
+    <div class="services">
+        {% for s in services %}
+        <div class="svc {% if s.bad %}bad{% endif %}">
+            <span class="sq"></span>
+            <span class="svc-name">{{ s.name }}</span>
+            <span class="svc-val">{{ s.value }}</span>
+            <span class="svc-note">{{ s.note }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <div class="alerts {% if alerts %}bad{% endif %}">
         <span class="label">{% if alerts %}{{ alerts | length }} alert{{ 's' if alerts | length != 1 else '' }}{% else %}No alerts{% endif %}</span>

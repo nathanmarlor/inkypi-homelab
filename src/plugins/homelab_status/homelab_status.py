@@ -31,9 +31,18 @@ TARGET_NAMES = {
 class HomelabStatus(ThemedPlugin):
     def generate_settings_template(self):
         template_params = super().generate_settings_template()
-        template_params["defaults"] = {"prometheusUrl": DEFAULT_PROMETHEUS_URL}
+        template_params["defaults"] = {"prometheusUrl": DEFAULT_PROMETHEUS_URL, "page": "hosts"}
         template_params["style_settings"] = True
         return template_params
+
+    @staticmethod
+    def fmt_uptime(seconds):
+        if seconds is None:
+            return ""
+        days = int(seconds // 86400)
+        if days:
+            return f"up {days}d"
+        return f"up {int(seconds // 3600)}h"
 
     def generate_image(self, settings, device_config):
         prom = Prom(settings.get("prometheusUrl") or DEFAULT_PROMETHEUS_URL)
@@ -89,6 +98,7 @@ class HomelabStatus(ThemedPlugin):
                 mem_pct[inst] = min(100.0, 100 * (1 - mem_avail[inst] / host_total))
         disk_pct = {m.get("instance"): v for m, v in prom.rows('100 * (1 - node_filesystem_avail_bytes{job="' + HOST_JOB + '",mountpoint="/"} / node_filesystem_size_bytes{job="' + HOST_JOB + '",mountpoint="/"})')}
         temp = {m.get("instance"): v for m, v in prom.rows('max by (instance)(node_hwmon_temp_celsius{job="' + HOST_JOB + '"})')}
+        uptime = {m.get("instance"): v for m, v in prom.rows('node_time_seconds{job="' + HOST_JOB + '"} - node_boot_time_seconds')}
         hosts = []
         host_keys = list(HOST_NAMES) or sorted(load)
         for inst in host_keys:
@@ -107,6 +117,7 @@ class HomelabStatus(ThemedPlugin):
                 "huge_gb": huge_bytes.get(inst, 0) / 2**30,
                 "disk_pct": int(disk_pct.get(inst, 0)),
                 "temp": temp.get(inst),
+                "uptime": self.fmt_uptime(uptime.get(inst)),
             })
 
         # ---- services ----
@@ -216,7 +227,14 @@ class HomelabStatus(ThemedPlugin):
         if node_sync < 0.999:
             alerts.append(f"bitcoin node {100 * node_sync:.1f}% synced")
 
+        services = [
+            {"name": t["label"], "value": t["value"], "note": t["sub"], "bad": t["bad"]} for t in tiles
+        ]
+        page = (settings.get("page") or "hosts").lower()
         template_params = {
+            "page": page,
+            "page_no": 1 if page == "hosts" else 2,
+            "services": services,
             "alerts": alerts,
             "cluster": cluster,
             "updated": now.strftime(time_format).lstrip("0"),

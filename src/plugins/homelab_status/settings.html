@@ -3,12 +3,23 @@
         <label for="prometheusUrl" class="form-label">Prometheus URL:</label>
         <input type="text" id="prometheusUrl" name="prometheusUrl" class="form-input" value="{{ defaults.prometheusUrl }}">
     </div>
+    <div class="form-group nowrap">
+        <label for="page" class="form-label">Page:</label>
+        <select id="page" name="page" class="form-input">
+            <option value="hosts">1/2 Hosts</option>
+            <option value="platform">2/2 Cluster and services</option>
+        </select>
+    </div>
+</div>
+<div class="form-group">
+    <span style="color: var(--text-primary);">Add the plugin twice to a playlist, one instance per page, to get both screens in the cycle.</span>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        if (loadPluginSettings && pluginSettings.prometheusUrl) {
-            document.getElementById('prometheusUrl').value = pluginSettings.prometheusUrl;
+        if (loadPluginSettings) {
+            if (pluginSettings.prometheusUrl) document.getElementById('prometheusUrl').value = pluginSettings.prometheusUrl;
+            if (pluginSettings.page) document.getElementById('page').value = pluginSettings.page;
         }
     });
 </script>
